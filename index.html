@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Chess Coach</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Coach">
+<meta name="theme-color" content="#14201c">
+<style>
+:root{--bg:#14201c;--panel:#1e2d27;--ink:#ece6d6;--dim:#9fb0a6;--gold:#d9a441;--red:#e0645a;--org:#e39a4a;--yel:#cdbf5a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,system-ui,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:640px;margin:0 auto;padding:20px 16px 60px}
+h1{font:700 30px/1.1 Georgia,serif;margin:8px 0 4px}
+h2{font:700 20px Georgia,serif;margin:28px 0 10px}
+p{color:var(--dim);margin:4px 0 16px}
+form{display:flex;gap:8px}
+input{flex:1;min-width:0;padding:12px;border-radius:10px;border:1px solid #3a4f45;background:var(--panel);color:var(--ink);font-size:16px}
+button{padding:12px 16px;border:0;border-radius:10px;background:var(--gold);color:#1b1608;font-weight:700;font-size:15px}
+button:disabled{opacity:.5}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--panel);padding:12px;border-radius:10px;margin-bottom:8px}
+.row small{color:var(--dim);display:block}
+.row button{padding:8px 12px}
+.mv{background:var(--panel);border-left:5px solid;border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.mv b{font-size:17px}.mv small{color:var(--dim)}
+.bar{height:10px;border-radius:5px;background:#2b3d35;margin:4px 0 12px;overflow:hidden}.bar i{display:block;height:100%;background:var(--gold)}
+#msg{color:var(--gold);min-height:24px;margin-top:10px}
+</style></head><body><main>
+<h1>Chess Coach</h1>
+<p>Loads your chess.com games, finds your mistakes, and tracks what you keep doing wrong.</p>
+<form id="f"><input id="u" placeholder="chess.com username" autocapitalize="none" autocorrect="off"><button>Load games</button></form>
+<div id="msg"></div>
+<div id="games"></div><div id="review"></div><div id="stats"></div>
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script>
+const $=id=>document.getElementById(id), V={p:1,n:3,b:3,r:5,q:9,k:0};
+const LBL={blunder:['Blunder','var(--red)'],mistake:['Mistake','var(--org)'],inacc:['Inaccuracy','var(--yel)']};
+let sf,resolver,last=0,user='',gamesList=[];
+const store=()=>JSON.parse(localStorage.getItem('cc')||'{"done":[],"moves":0,"n":{},"cause":{},"phase":{}}');
+async function engine(){
+  if(sf)return;
+  const src=await (await fetch('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js')).text();
+  sf=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));
+  sf.onmessage=e=>{const l=typeof e.data==='string'?e.data:'';
+    if(l.startsWith('info')&&l.includes(' score ')){const m=l.match(/score (cp|mate) (-?\d+)/);if(m)last=m[1]==='cp'?+m[2]:(m[2]>0?1e4-m[2]:-1e4-m[2]);}
+    else if(l.startsWith('bestmove')&&resolver)resolver({cp:last,best:l.split(' ')[1]});};
+  sf.postMessage('uci');
+}
+const evalFen=fen=>new Promise(r=>{resolver=r;last=0;sf.postMessage('position fen '+fen);sf.postMessage('go depth 10');});
+const clip=x=>Math.max(-1000,Math.min(1000,x));
+function say(t){$('msg').textContent=t}
+
+$('f').onsubmit=async e=>{
+  e.preventDefault();user=$('u').value.trim().toLowerCase();if(!user)return;
+  say('Loading games…');$('games').innerHTML='';
+  try{
+    const a=await (await fetch(`https://api.chess.com/pub/player/${encodeURIComponent(user)}/games/archives`)).json();
+    if(!a.archives||!a.archives.length)return say('No games found for that username.');
+    const g=await (await fetch(a.archives[a.archives.length-1])).json();
+    gamesList=g.games.filter(x=>x.pgn&&x.rules==='chess').reverse().slice(0,10);
+    if(!gamesList.length)return say('No standard games in your latest month.');
+    say('');
+    $('games').innerHTML='<h2>Recent games</h2>'+gamesList.map((x,i)=>{
+      const w=x.white.username.toLowerCase()===user,me=w?x.white:x.black,op=w?x.black:x.white;
+      return `<div class="row"><div>vs ${op.username} (${op.rating})<small>${w?'White':'Black'} · ${x.time_class} · ${me.result}</small></div><button onclick="run(${i},this)">Review</button></div>`}).join('');
+    show();
+  }catch(err){say('Could not load games. Check the username and your connection.')}
+};
+
+async function run(i,btn){
+  btn.disabled=true;const x=gamesList[i];
+  const color=x.white.username.toLowerCase()===user?'w':'b';
+  try{
+    say('Starting engine…');await engine();
+    const r=await analyze(x.pgn,color);
+    renderReview(r,x);
+    const s=store();
+    if(!s.done.includes(x.url)){
+      s.done.push(x.url);s.moves+=r.mine;
+      r.list.forEach(m=>{s.n[m.k]=(s.n[m.k]||0)+1;s.cause[m.cause]=(s.cause[m.cause]||0)+1;s.phase[m.phase]=(s.phase[m.phase]||0)+1});
+      localStorage.setItem('cc',JSON.stringify(s));
+    }
+    say('');show();
+  }catch(err){say('Review failed: '+err.message)}
+  btn.disabled=false;
+}
+
+async function analyze(pgn,color){
+  const g=new Chess();if(!g.load_pgn(pgn))throw new Error('could not read game');
+  const mv=g.history({verbose:true}),c=new Chess(),ev=[],fen=[];
+  for(let i=0;i<=mv.length;i++){
+    say(`Analyzing position ${i+1} of ${mv.length+1}…`);
+    fen.push(c.fen());
+    ev.push(c.game_over()?{cp:c.in_checkmate()?-1e4:0,best:null}:await evalFen(c.fen()));
+    if(i<mv.length)c.move(mv[i]);
+  }
+  const list=[];let mine=0;
+  const cap=(f,u)=>{if(!u)return null;const t=new Chess(f),m=t.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});return m};
+  mv.forEach((m,i)=>{
+    if(m.color!==color)return;mine++;
+    const loss=Math.max(0,clip(ev[i].cp)-clip(-ev[i+1].cp));
+    if(loss<50)return;
+    const k=loss>=200?'blunder':loss>=100?'mistake':'inacc';
+    const board=fen[i].split(' ')[0],heavy=(board.match(/[nbrqNBRQ]/g)||[]).length;
+    const phase=i<20?'Opening':heavy<=6?'Endgame':'Middlegame';
+    let cause='Positional or tactical slip';
+    const best=cap(fen[i],ev[i].best),reply=cap(fen[i+1],ev[i+1].best);
+    if(reply&&reply.captured&&V[reply.captured]>=3&&loss>=100)cause='Left a piece hanging';
+    else if(best&&best.captured&&V[best.captured]>=3&&loss>=100)cause='Missed a free capture';
+    else if(ev[i].cp>=300&&ev[i+1].cp>=200)cause='Let a winning position slip';
+    list.push({n:Math.floor(i/2)+1,san:m.san,k,loss,phase,cause,bestSan:best?best.san:'—'});
+  });
+  return {list,mine};
+}
+
+function renderReview(r,x){
+  $('review').innerHTML=`<h2>Review: ${x.white.username} vs ${x.black.username}</h2>`+
+  (r.list.length?r.list.map(m=>`<div class="mv" style="border-color:${LBL[m.k][1]}"><b>Move ${m.n}: ${m.san}</b> — ${LBL[m.k][0]}<br>Better: <b>${m.bestSan}</b> · cost ${(m.loss/100).toFixed(1)} pawns<br><small>${m.cause} · ${m.phase}</small></div>`).join(''):'<p>No significant mistakes found. Clean game.</p>');
+  $('review').scrollIntoView({behavior:'smooth'});
+}
+
+function show(){
+  const s=store();if(!s.done.length){$('stats').innerHTML='';return}
+  const tot=Object.values(s.n).reduce((a,b)=>a+b,0)||1;
+  const bars=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} (${v})<div class="bar"><i style="width:${v/tot*100}%"></i></div>`).join('');
+  $('stats').innerHTML=`<h2>Your patterns across ${s.done.length} game${s.done.length>1?'s':''}</h2><p>${s.moves} of your moves reviewed, ${tot} errors.</p><b>Most common causes</b>${bars(s.cause)}<br><b>Where they happen</b>${bars(s.phase)}`;
+}
+show();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script></body></html>
