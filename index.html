@@ -3,6 +3,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Chess Coach</title>
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Coach">
 <meta name="theme-color" content="#14201c">
@@ -10,34 +11,79 @@
 :root{--bg:#14201c;--panel:#1e2d27;--ink:#ece6d6;--dim:#9fb0a6;--gold:#d9a441;--red:#e0645a;--org:#e39a4a;--yel:#cdbf5a}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,system-ui,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
-main{max-width:640px;margin:0 auto;padding:20px 16px 60px}
-h1{font:700 30px/1.1 Georgia,serif;margin:8px 0 4px}
-h2{font:700 20px Georgia,serif;margin:28px 0 10px}
-p{color:var(--dim);margin:4px 0 16px}
+main{max-width:640px;margin:0 auto;padding:16px 16px 60px}
+h1{font:700 28px/1.1 Georgia,serif;margin:6px 0}
+h2{font:700 20px Georgia,serif;margin:24px 0 10px}
+p{color:var(--dim);margin:4px 0 14px}
+a{color:var(--gold)}
+#top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+#chip{color:var(--dim);font-size:14px}
 form{display:flex;gap:8px}
-input{flex:1;min-width:0;padding:12px;border-radius:10px;border:1px solid #3a4f45;background:var(--panel);color:var(--ink);font-size:16px}
-button{padding:12px 16px;border:0;border-radius:10px;background:var(--gold);color:#1b1608;font-weight:700;font-size:15px}
+input,select{flex:1;min-width:0;padding:11px;border-radius:10px;border:1px solid #3a4f45;background:var(--panel);color:var(--ink);font-size:16px}
+button{padding:11px 14px;border:0;border-radius:10px;background:var(--gold);color:#1b1608;font-weight:700;font-size:15px}
 button:disabled{opacity:.5}
+#tabs{display:flex;gap:6px;margin:12px 0}
+#tabs button{flex:1;background:var(--panel);color:var(--dim)}
+#tabs button.on{background:var(--gold);color:#1b1608}
 .row{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--panel);padding:12px;border-radius:10px;margin-bottom:8px}
 .row small{color:var(--dim);display:block}
 .row button{padding:8px 12px}
-.mv{background:var(--panel);border-left:5px solid;border-radius:8px;padding:10px 12px;margin-bottom:8px}
-.mv b{font-size:17px}.mv small{color:var(--dim)}
+.mv{cursor:pointer;background:var(--panel);border-left:5px solid;border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.mv small{color:var(--dim)}
 .bar{height:10px;border-radius:5px;background:#2b3d35;margin:4px 0 12px;overflow:hidden}.bar i{display:block;height:100%;background:var(--gold)}
-#msg{color:var(--gold);min-height:24px;margin-top:10px}
+#msg{color:var(--gold);min-height:24px}
+.bd{position:relative;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr));width:100%;aspect-ratio:1/1;border-radius:6px;overflow:hidden;user-select:none;-webkit-user-select:none}
+.bd svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.sq{display:flex;align-items:center;justify-content:center;aspect-ratio:1/1;min-width:0;min-height:0;overflow:hidden;font-size:min(10.5vw,56px);line-height:1}
+.l{background:#e8dfc4}.d{background:#7a9a6b}
+.w{color:#fff;text-shadow:0 0 2px #000,0 0 2px #000,0 0 1px #000}.b{color:#141414}
+.ctl{display:flex;gap:6px;margin:10px 0;flex-wrap:wrap}.ctl button{flex:1;padding:10px 6px}
+.alt{background:var(--panel)!important;color:var(--ink)!important;border:1px solid #3a4f45!important}
+#cap,.st{min-height:26px;margin-top:8px}
+
+body{-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+button,.sq,.mv{touch-action:manipulation}
+button{min-height:44px}
+@media(max-width:480px){main{padding:10px 8px 70px}.bd{border-radius:4px}}
 </style></head><body><main>
-<h1>Chess Coach</h1>
-<p>Loads your chess.com games, finds your mistakes, and tracks what you keep doing wrong.</p>
-<form id="f"><input id="u" placeholder="chess.com username" autocapitalize="none" autocorrect="off"><button>Load games</button></form>
+<div id="top"><h1>Chess Coach</h1><div id="chip"></div></div>
+<div id="setup" hidden><p>Enter your chess.com username once. It's saved on this device only.</p>
+<form id="f"><input id="u" placeholder="chess.com username" autocapitalize="none" autocorrect="off"><button>Save</button></form></div>
+<div id="app" hidden>
+<nav id="tabs"><button data-t="review">Review Games</button><button data-t="play">Play</button><button data-t="puz">Puzzles</button></nav>
 <div id="msg"></div>
-<div id="games"></div><div id="review"></div><div id="stats"></div>
-</main>
+<section id="review"><select id="mo"></select><div id="games" style="margin-top:10px"></div><div id="rv"></div><div id="stats"></div></section>
+<section id="play" hidden></section>
+<section id="puz" hidden></section>
+</div></main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 <script>
-const $=id=>document.getElementById(id), V={p:1,n:3,b:3,r:5,q:9,k:0};
+const $=id=>document.getElementById(id),V={p:1,n:3,b:3,r:5,q:9,k:0};
 const LBL={blunder:['Blunder','var(--red)'],mistake:['Mistake','var(--org)'],inacc:['Inaccuracy','var(--yel)']};
-let sf,resolver,last=0,user='',gamesList=[];
-const store=()=>JSON.parse(localStorage.getItem('cc')||'{"done":[],"moves":0,"n":{},"cause":{},"phase":{}}');
+const GL={k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
+let user=localStorage.getItem('ccuser')||'',tabClick=null,sf,resolver,last=0,skill=20,gamesList=[];
+const st=()=>JSON.parse(localStorage.getItem('cc_'+user)||'{"done":[],"moves":0,"n":{},"cause":{},"phase":{}}');
+const pz=()=>JSON.parse(localStorage.getItem('pz_'+user)||'[]');
+const say=t=>$('msg').textContent=t;
+
+/* ---------- profile ---------- */
+function boot(){
+  $('setup').hidden=!!user;$('app').hidden=!user;
+  $('chip').innerHTML=user?`${user} · <a href="#" onclick="chg();return false">change</a>`:'';
+  if(user){go('review');loadMonths()}
+}
+function chg(){user='';localStorage.removeItem('ccuser');$('games').innerHTML=$('rv').innerHTML=$('stats').innerHTML='';boot()}
+$('f').onsubmit=e=>{e.preventDefault();const v=$('u').value.trim().toLowerCase();if(v){user=v;localStorage.setItem('ccuser',v);boot()}};
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>go(b.dataset.t));
+function go(t){
+  tabClick=null;say('');
+  ['review','play','puz'].forEach(x=>$(x).hidden=x!==t);
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  if(t==='play')playUI();if(t==='puz')puzNext(true);
+}
+document.addEventListener('click',e=>{const s=e.target.closest('.sq');if(s&&tabClick)tabClick(s.dataset.q)});
+
+/* ---------- engine ---------- */
 async function engine(){
   if(sf)return;
   const src=await (await fetch('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js')).text();
@@ -47,45 +93,66 @@ async function engine(){
     else if(l.startsWith('bestmove')&&resolver)resolver({cp:last,best:l.split(' ')[1]});};
   sf.postMessage('uci');
 }
-const evalFen=fen=>new Promise(r=>{resolver=r;last=0;sf.postMessage('position fen '+fen);sf.postMessage('go depth 10');});
+const setSkill=n=>{if(n!==skill){sf.postMessage('setoption name Skill Level value '+n);skill=n}};
+const evalFen=fen=>new Promise(r=>{setSkill(20);resolver=r;last=0;sf.postMessage('position fen '+fen);sf.postMessage('go depth 10')});
+const engMove=(fen,l)=>new Promise(r=>{setSkill(l);resolver=r;last=0;sf.postMessage('position fen '+fen);sf.postMessage('go movetime 700')});
 const clip=x=>Math.max(-1000,Math.min(1000,x));
-function say(t){$('msg').textContent=t}
 
-$('f').onsubmit=async e=>{
-  e.preventDefault();user=$('u').value.trim().toLowerCase();if(!user)return;
-  say('Loading games…');$('games').innerHTML='';
+/* ---------- board ---------- */
+function xy(q,f){const c=q.charCodeAt(0)-97,r=8-+q[1];return f?[7-c,7-r]:[c,r]}
+function board(fen,hl,ar,flip){
+  const b=new Chess(fen).board();let h='';
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const rr=flip?7-r:r,cc=flip?7-c:c,p=b[rr][cc],q=String.fromCharCode(97+cc)+(8-rr),col=hl[q];
+    h+=`<div class="sq ${(r+c)%2?'d':'l'}" data-q="${q}"${col?` style="background:${col}"`:''}>${p?`<span class="${p.color}">${GL[p.type]}\uFE0E</span>`:''}</div>`;
+  }
+  let a='';
+  if(ar){const [x1,y1]=xy(ar[0],flip),[x2,y2]=xy(ar[1],flip);
+    a=`<svg viewBox="0 0 8 8"><defs><marker id="ah" markerWidth="4" markerHeight="4" refX="2" refY="2" orient="auto"><path d="M0,0L4,2L0,4z" fill="#4fbf6a"/></marker></defs><line x1="${x1+.5}" y1="${y1+.5}" x2="${x2+.5}" y2="${y2+.5}" stroke="#4fbf6a" stroke-width=".18" opacity=".9" marker-end="url(#ah)"/></svg>`}
+  return `<div class="bd">${h}${a}</div>`;
+}
+const hlMoves=(g,s,hl)=>{if(s){hl[s]='rgba(217,164,65,.6)';g.moves({square:s,verbose:true}).forEach(m=>hl[m.to]='rgba(217,164,65,.35)')}};
+
+/* ---------- review ---------- */
+async function loadMonths(){
+  say('Loading games…');
   try{
     const a=await (await fetch(`https://api.chess.com/pub/player/${encodeURIComponent(user)}/games/archives`)).json();
-    if(!a.archives||!a.archives.length)return say('No games found for that username.');
-    const g=await (await fetch(a.archives[a.archives.length-1])).json();
-    gamesList=g.games.filter(x=>x.pgn&&x.rules==='chess').reverse().slice(0,10);
-    if(!gamesList.length)return say('No standard games in your latest month.');
-    say('');
-    $('games').innerHTML='<h2>Recent games</h2>'+gamesList.map((x,i)=>{
+    const arch=(a.archives||[]).slice(-6).reverse();
+    if(!arch.length)return say('No games found for that username. Use "change" to fix it.');
+    $('mo').innerHTML=arch.map(u=>{const p=u.split('/');return `<option value="${u}">${p[p.length-2]}-${p[p.length-1]}</option>`}).join('');
+    loadGames();
+  }catch(e){say('Could not reach chess.com.')}
+}
+$('mo').onchange=()=>loadGames();
+async function loadGames(){
+  say('Loading games…');
+  try{
+    const g=await (await fetch($('mo').value)).json(),done=st().done;
+    gamesList=g.games.filter(x=>x.pgn&&x.rules==='chess').reverse().slice(0,15);
+    $('games').innerHTML=gamesList.length?gamesList.map((x,i)=>{
       const w=x.white.username.toLowerCase()===user,me=w?x.white:x.black,op=w?x.black:x.white;
-      return `<div class="row"><div>vs ${op.username} (${op.rating})<small>${w?'White':'Black'} · ${x.time_class} · ${me.result}</small></div><button onclick="run(${i},this)">Review</button></div>`}).join('');
-    show();
-  }catch(err){say('Could not load games. Check the username and your connection.')}
-};
-
+      return `<div class="row"><div>vs ${op.username} (${op.rating})<small>${w?'White':'Black'} · ${x.time_class} · ${me.result}</small></div><button onclick="run(${i},this)">${done.includes(x.url)?'✓ Review':'Review'}</button></div>`}).join(''):'<p>No standard games this month.</p>';
+    say('');show();
+  }catch(e){say('Could not load that month.')}
+}
 async function run(i,btn){
-  btn.disabled=true;const x=gamesList[i];
-  const color=x.white.username.toLowerCase()===user?'w':'b';
+  btn.disabled=true;const x=gamesList[i],color=x.white.username.toLowerCase()===user?'w':'b';
   try{
     say('Starting engine…');await engine();
-    const r=await analyze(x.pgn,color);
-    renderReview(r,x);
-    const s=store();
+    const r=await analyze(x.pgn,color);renderReview(r,x);
+    const s=st();
     if(!s.done.includes(x.url)){
       s.done.push(x.url);s.moves+=r.mine;
       r.list.forEach(m=>{s.n[m.k]=(s.n[m.k]||0)+1;s.cause[m.cause]=(s.cause[m.cause]||0)+1;s.phase[m.phase]=(s.phase[m.phase]||0)+1});
-      localStorage.setItem('cc',JSON.stringify(s));
+      localStorage.setItem('cc_'+user,JSON.stringify(s));
+      const p=pz();r.list.filter(m=>m.k!=='inacc').forEach(m=>p.push({fen:r.fen[m.i],bu:m.bu,san:m.bestSan,c:color}));
+      localStorage.setItem('pz_'+user,JSON.stringify(p.slice(-150)));
     }
-    say('');show();
+    say('');show();btn.textContent='✓ Review';
   }catch(err){say('Review failed: '+err.message)}
   btn.disabled=false;
 }
-
 async function analyze(pgn,color){
   const g=new Chess();if(!g.load_pgn(pgn))throw new Error('could not read game');
   const mv=g.history({verbose:true}),c=new Chess(),ev=[],fen=[];
@@ -96,36 +163,104 @@ async function analyze(pgn,color){
     if(i<mv.length)c.move(mv[i]);
   }
   const list=[];let mine=0;
-  const cap=(f,u)=>{if(!u)return null;const t=new Chess(f),m=t.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});return m};
+  const cap=(f,u)=>{if(!u)return null;return new Chess(f).move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]})};
   mv.forEach((m,i)=>{
     if(m.color!==color)return;mine++;
     const loss=Math.max(0,clip(ev[i].cp)-clip(-ev[i+1].cp));
     if(loss<50)return;
     const k=loss>=200?'blunder':loss>=100?'mistake':'inacc';
-    const board=fen[i].split(' ')[0],heavy=(board.match(/[nbrqNBRQ]/g)||[]).length;
+    const heavy=(fen[i].split(' ')[0].match(/[nbrqNBRQ]/g)||[]).length;
     const phase=i<20?'Opening':heavy<=6?'Endgame':'Middlegame';
     let cause='Positional or tactical slip';
     const best=cap(fen[i],ev[i].best),reply=cap(fen[i+1],ev[i+1].best);
     if(reply&&reply.captured&&V[reply.captured]>=3&&loss>=100)cause='Left a piece hanging';
     else if(best&&best.captured&&V[best.captured]>=3&&loss>=100)cause='Missed a free capture';
     else if(ev[i].cp>=300&&ev[i+1].cp>=200)cause='Let a winning position slip';
-    list.push({n:Math.floor(i/2)+1,san:m.san,k,loss,phase,cause,bestSan:best?best.san:'—'});
+    list.push({i,bu:ev[i].best,n:Math.floor(i/2)+1,san:m.san,k,loss,phase,cause,bestSan:best?best.san:'—'});
   });
-  return {list,mine};
+  return {list,mine,fen,mv,color};
 }
-
+let R=null;
+function view(i,mode){
+  const {fen,mv,color,list}=R;i=Math.max(0,Math.min(mv.length,i));
+  const m=list.find(x=>x.i===i),last=i>0?mv[i-1]:null;
+  let f=fen[i],hl={},ar=null,cap=`Move ${Math.ceil(i/2)} of ${Math.ceil(mv.length/2)}`;
+  if(last&&mode==='cur')hl[last.from]=hl[last.to]='rgba(217,164,65,.45)';
+  if(m&&mode==='cur')cap=`<b>${LBL[m.k][0]}</b> coming up. What would you play here?`;
+  if(m&&mode==='played'){const p=mv[i];f=fen[i+1];hl[p.from]=hl[p.to]='rgba(224,100,90,.6)';cap=`You played <b>${m.san}</b>. ${m.cause}.`}
+  if(m&&mode==='better'){const u=m.bu,t=new Chess(fen[i]);t.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});f=t.fen();
+    hl[u.slice(0,2)]=hl[u.slice(2,4)]='rgba(79,191,106,.55)';ar=[u.slice(0,2),u.slice(2,4)];cap=`Better: <b>${m.bestSan}</b>`}
+  $('bv').innerHTML=board(f,hl,ar,color==='b')+`<div id="cap">${cap}</div>
+  <div class="ctl"><button class="alt" onclick="view(0,'cur')">⏮</button><button class="alt" onclick="view(${i-1},'cur')">◀</button><button class="alt" onclick="view(${i+1},'cur')">▶</button><button class="alt" onclick="view(${mv.length},'cur')">⏭</button></div>`+
+  (m?`<div class="ctl"><button class="alt" onclick="view(${i},'cur')">Before</button><button onclick="view(${i},'played')" style="background:var(--red)">My move</button><button onclick="view(${i},'better')">Better move</button></div>`:'');
+}
 function renderReview(r,x){
-  $('review').innerHTML=`<h2>Review: ${x.white.username} vs ${x.black.username}</h2>`+
-  (r.list.length?r.list.map(m=>`<div class="mv" style="border-color:${LBL[m.k][1]}"><b>Move ${m.n}: ${m.san}</b> — ${LBL[m.k][0]}<br>Better: <b>${m.bestSan}</b> · cost ${(m.loss/100).toFixed(1)} pawns<br><small>${m.cause} · ${m.phase}</small></div>`).join(''):'<p>No significant mistakes found. Clean game.</p>');
-  $('review').scrollIntoView({behavior:'smooth'});
+  R=r;
+  $('rv').innerHTML=`<h2>${x.white.username} vs ${x.black.username}</h2><div id="bv"></div><h2>Your mistakes (tap to see on board)</h2>`+
+  (r.list.length?r.list.map(m=>`<div class="mv" style="border-color:${LBL[m.k][1]}" onclick="view(${m.i},'cur');$('bv').scrollIntoView({behavior:'smooth'})"><b>Move ${m.n}: ${m.san}</b> — ${LBL[m.k][0]}<br>Better: <b>${m.bestSan}</b> · cost ${(m.loss/100).toFixed(1)} pawns<br><small>${m.cause} · ${m.phase}</small></div>`).join(''):'<p>No significant mistakes found. Clean game.</p>');
+  view(r.list.length?r.list[0].i:0,'cur');
+  $('rv').scrollIntoView({behavior:'smooth'});
 }
-
 function show(){
-  const s=store();if(!s.done.length){$('stats').innerHTML='';return}
+  const s=st();if(!s.done.length){$('stats').innerHTML='';return}
   const tot=Object.values(s.n).reduce((a,b)=>a+b,0)||1;
   const bars=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} (${v})<div class="bar"><i style="width:${v/tot*100}%"></i></div>`).join('');
   $('stats').innerHTML=`<h2>Your patterns across ${s.done.length} game${s.done.length>1?'s':''}</h2><p>${s.moves} of your moves reviewed, ${tot} errors.</p><b>Most common causes</b>${bars(s.cause)}<br><b>Where they happen</b>${bars(s.phase)}`;
 }
-show();
+
+/* ---------- play ---------- */
+let P=null,pc='w',psel=null,pLvl=5,busy=false;
+const LV=[['Beginner (~600)',0],['~800',2],['~1000',4],['~1200',6],['~1500',9],['~1800',12],['Strong (2000+)',17]];
+function playUI(){
+  $('play').innerHTML=`<p>Levels are approximate. Pick one, then tap a piece and its destination.</p>
+  <div class="ctl"><select id="lv">${LV.map(l=>`<option value="${l[1]}">${l[0]}</option>`).join('')}</select><select id="pcol"><option value="w">I play White</option><option value="b">I play Black</option></select></div>
+  <div class="ctl"><button onclick="newGame()">New game</button><button class="alt" onclick="undo()">Undo move</button></div><div id="pb"></div><div class="st" id="ps"></div>`;
+  $('lv').value=pLvl;$('pcol').value=pc;
+  if(!P)newGame();else{tabClick=pClick;drawP()}
+}
+async function newGame(){pLvl=+$('lv').value;pc=$('pcol').value;P=new Chess();psel=null;tabClick=pClick;drawP();if(pc==='b')await engReply()}
+function drawP(){
+  const hl={},h=P.history({verbose:true});
+  if(h.length){const l=h[h.length-1];hl[l.from]=hl[l.to]='rgba(217,164,65,.45)'}
+  hlMoves(P,psel,hl);
+  $('pb').innerHTML=board(P.fen(),hl,null,pc==='b');
+  $('ps').textContent=P.in_checkmate()?'Checkmate — '+(P.turn()===pc?'you lost.':'you won!'):P.game_over()?'Game drawn.':busy?'Engine thinking…':'Your move'+(P.in_check()?' (you are in check)':'');
+}
+function pClick(q){
+  if(busy||P.game_over()||P.turn()!==pc)return;
+  if(psel&&P.move({from:psel,to:q,promotion:'q'})){psel=null;drawP();return engReply()}
+  const p=P.get(q);psel=p&&p.color===pc?q:null;drawP();
+}
+async function engReply(){
+  if(P.game_over())return drawP();
+  busy=true;$('ps').textContent='Engine thinking…';
+  try{await engine();const r=await engMove(P.fen(),pLvl),u=r.best;P.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]})}catch(e){say('Engine error: '+e.message)}
+  busy=false;drawP();
+}
+function undo(){if(!busy&&P.history().length>=2){P.undo();P.undo();psel=null;drawP()}}
+
+/* ---------- puzzles ---------- */
+let Z=null,ZG=null,zsel=null,zres=0,zmsg='',zs={ok:0,n:0};
+function puzNext(first){
+  const a=pz();tabClick=null;
+  if(!a.length){$('puz').innerHTML='<p>No puzzles yet. Review a game first and your own mistakes and blunders will appear here as puzzles.</p>';return}
+  if(!(first&&Z)){Z=a[Math.floor(Math.random()*a.length)];ZG=new Chess(Z.fen);zsel=null;zres=0;zmsg=`You are ${Z.c==='w'?'White':'Black'}. Find the best move.`}
+  tabClick=zClick;drawZ();
+}
+function drawZ(){
+  const hl={};hlMoves(ZG,zsel,hl);
+  $('puz').innerHTML=board(ZG.fen(),hl,zres===2?[Z.bu.slice(0,2),Z.bu.slice(2,4)]:null,Z.c==='b')+`<div id="cap">${zmsg}</div><div class="ctl"><button onclick="puzNext()">Next puzzle</button></div><p>Solved ${zs.ok} of ${zs.n} this session · ${pz().length} puzzles saved</p>`;
+}
+function zClick(q){
+  if(zres)return;
+  if(zsel){const m=ZG.move({from:zsel,to:q,promotion:'q'});
+    if(m){zs.n++;const u=m.from+m.to+(m.promotion||'');
+      if(u===Z.bu){zs.ok++;zres=1;zmsg=`✅ Correct! ${Z.san}`}
+      else{ZG.undo();zres=2;zmsg=`❌ Not quite. Best was <b>${Z.san}</b> (green arrow).`}
+      zsel=null;return drawZ()}}
+  const p=ZG.get(q);zsel=p&&p.color===Z.c?q:null;drawZ();
+}
+
+boot();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script></body></html>
