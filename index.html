@@ -6,9 +6,9 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Coach">
-<meta name="theme-color" content="#14201c">
+<meta name="theme-color" content="#262421">
 <style>
-:root{--bg:#14201c;--panel:#1e2d27;--ink:#ece6d6;--dim:#9fb0a6;--gold:#d9a441;--red:#e0645a;--org:#e39a4a;--yel:#cdbf5a}
+:root{--bg:#262421;--panel:#32302d;--ink:#f0efec;--dim:#a8a7a3;--gold:#81b64c;--red:#e0645a;--org:#e39a4a;--yel:#cdbf5a}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,system-ui,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
 main{max-width:640px;margin:0 auto;padding:16px 16px 60px}
@@ -20,11 +20,11 @@ a{color:var(--gold)}
 #chip{color:var(--dim);font-size:14px}
 form{display:flex;gap:8px}
 input,select{flex:1;min-width:0;padding:11px;border-radius:10px;border:1px solid #3a4f45;background:var(--panel);color:var(--ink);font-size:16px}
-button{padding:11px 14px;border:0;border-radius:10px;background:var(--gold);color:#1b1608;font-weight:700;font-size:15px}
+button{padding:11px 14px;border:0;border-radius:10px;background:var(--gold);color:#fff;font-weight:700;font-size:15px}
 button:disabled{opacity:.5}
 #tabs{display:flex;gap:6px;margin:12px 0}
 #tabs button{flex:1;background:var(--panel);color:var(--dim)}
-#tabs button.on{background:var(--gold);color:#1b1608}
+#tabs button.on{background:var(--gold);color:#fff}
 .row{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--panel);padding:12px;border-radius:10px;margin-bottom:8px}
 .row small{color:var(--dim);display:block}
 .row button{padding:8px 12px}
@@ -35,8 +35,13 @@ button:disabled{opacity:.5}
 .bd{position:relative;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr));width:100%;aspect-ratio:1/1;border-radius:6px;overflow:hidden;user-select:none;-webkit-user-select:none}
 .bd svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .sq{display:flex;align-items:center;justify-content:center;aspect-ratio:1/1;min-width:0;min-height:0;overflow:hidden;font-size:min(10.5vw,56px);line-height:1}
-.l{background:#e8dfc4}.d{background:#7a9a6b}
-.w{color:#fff;text-shadow:0 0 2px #000,0 0 2px #000,0 0 1px #000}.b{color:#141414}
+.l{background:#eeeed2}.d{background:#769656}
+.pc{width:88%;height:88%;pointer-events:none}
+.pc.w{--pf:#fafaf8;--ps:#6b6a66}.pc.b{--pf:#4a4846;--ps:#171615}
+.sq{position:relative}
+.cr,.cf{position:absolute;font:700 10px/1 -apple-system,system-ui,sans-serif;font-style:normal;pointer-events:none}
+.cr{top:3px;left:3px}.cf{right:3px;bottom:3px}
+.l .cr,.l .cf{color:#769656}.d .cr,.d .cf{color:#eeeed2}
 .ctl{display:flex;gap:6px;margin:10px 0;flex-wrap:wrap}.ctl button{flex:1;padding:10px 6px}
 .alt{background:var(--panel)!important;color:var(--ink)!important;border:1px solid #3a4f45!important}
 #cap,.st{min-height:26px;margin-top:8px}
@@ -45,7 +50,27 @@ body{-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
 button,.sq,.mv{touch-action:manipulation}
 button{min-height:44px}
 @media(max-width:480px){main{padding:10px 8px 70px}.bd{border-radius:4px}}
-</style></head><body><main>
+
+.coach{display:flex;gap:10px;align-items:flex-end;margin:6px 0 12px}
+.av{width:56px;height:56px;border-radius:50%;background:#4b6b36;display:flex;align-items:center;justify-content:center;font-size:32px;flex:none}
+.bub{background:#fff;color:#222;padding:12px 14px;border-radius:14px 14px 14px 2px;flex:1;font-size:15px;line-height:1.35}
+.cps{display:flex;gap:8px;margin:0 0 12px}
+.cp{flex:1;height:56px;border-radius:10px;border:2px solid transparent;font-size:30px;display:flex;align-items:center;justify-content:center}
+.cp.on,.lv.on{border-color:#81b64c}
+.cpw{background:#e8e8e6;color:#333}.cpb{background:#1c1b19;color:#ddd}.cpr{background:linear-gradient(90deg,#e8e8e6 50%,#1c1b19 50%);color:#777}
+.lv{display:flex;justify-content:space-between;background:var(--panel);padding:16px 14px;border-radius:10px;margin-bottom:8px;border:2px solid transparent;font-weight:600}
+.lv span{color:var(--dim)}
+.big{width:100%;padding:16px;font-size:20px;box-shadow:0 4px 0 #5d8a35;margin-top:6px}
+.pl{color:var(--dim);font-size:14px;margin:6px 2px}
+</style></head><body><svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="p-p" viewBox="0 0 100 100"><g fill="var(--pf)" stroke="var(--ps)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><circle cx="50" cy="32" r="12"/><rect x="40" y="43" width="20" height="7" rx="3"/><path d="M38 80C38 64 42 56 46 50H54C58 56 62 64 62 80Z"/><rect x="30" y="78" width="40" height="9" rx="3"/></g></symbol>
+<symbol id="p-r" viewBox="0 0 100 100"><g fill="var(--pf)" stroke="var(--ps)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><path d="M28 87V79L35 72V44L29 38V20H41V28H46V20H54V28H59V20H71V38L65 44V72L72 79V87Z"/><path d="M35 44H65M35 72H65" fill="none"/></g></symbol>
+<symbol id="p-n" viewBox="0 0 100 100"><g fill="var(--pf)" stroke="var(--ps)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><path d="M30 87C30 68 36 56 48 47C42 47 36 51 29 57L22 52C27 40 35 31 44 27L46 16L55 24C71 28 75 46 73 63L71 87Z"/><circle cx="52" cy="37" r="2.8" fill="var(--ps)" stroke="none"/></g></symbol>
+<symbol id="p-b" viewBox="0 0 100 100"><g fill="var(--pf)" stroke="var(--ps)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><circle cx="50" cy="15" r="5"/><path d="M50 21C63 31 66 40 60 48C64 56 64 65 60 72H72L72 87H28L28 72H40C36 65 36 56 40 48C34 40 37 31 50 21Z"/><path d="M45 38L55 48" fill="none"/></g></symbol>
+<symbol id="p-q" viewBox="0 0 100 100"><g fill="var(--pf)" stroke="var(--ps)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><path d="M26 82L20 34L33 56L35 28L45 52L50 24L55 52L65 28L67 56L80 34L74 82Z"/><rect x="26" y="80" width="48" height="9" rx="3"/><circle cx="20" cy="30" r="5"/><circle cx="35" cy="24" r="5"/><circle cx="50" cy="20" r="5"/><circle cx="65" cy="24" r="5"/><circle cx="80" cy="30" r="5"/></g></symbol>
+<symbol id="p-k" viewBox="0 0 100 100"><g fill="var(--pf)" stroke="var(--ps)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><path d="M30 84L26 58C26 46 38 42 50 42C62 42 74 46 74 58L70 84Z"/><rect x="26" y="82" width="48" height="9" rx="3"/><rect x="46" y="12" width="8" height="30" rx="2"/><rect x="38" y="20" width="24" height="8" rx="2"/></g></symbol>
+</defs></svg>
+<main>
 <div id="top"><h1>Chess Coach</h1><div id="chip"></div></div>
 <div id="setup" hidden><p>Enter your chess.com username once. It's saved on this device only.</p>
 <form id="f"><input id="u" placeholder="chess.com username" autocapitalize="none" autocorrect="off"><button>Save</button></form></div>
@@ -95,7 +120,7 @@ async function engine(){
 }
 const setSkill=n=>{if(n!==skill){sf.postMessage('setoption name Skill Level value '+n);skill=n}};
 const evalFen=fen=>new Promise(r=>{setSkill(20);resolver=r;last=0;sf.postMessage('position fen '+fen);sf.postMessage('go depth 10')});
-const engMove=(fen,l)=>new Promise(r=>{setSkill(l);resolver=r;last=0;sf.postMessage('position fen '+fen);sf.postMessage('go movetime 700')});
+const engMove=(fen,l,ms=700)=>new Promise(r=>{setSkill(l);resolver=r;last=0;sf.postMessage('position fen '+fen);sf.postMessage('go movetime '+ms)});
 const clip=x=>Math.max(-1000,Math.min(1000,x));
 
 /* ---------- board ---------- */
@@ -104,7 +129,7 @@ function board(fen,hl,ar,flip){
   const b=new Chess(fen).board();let h='';
   for(let r=0;r<8;r++)for(let c=0;c<8;c++){
     const rr=flip?7-r:r,cc=flip?7-c:c,p=b[rr][cc],q=String.fromCharCode(97+cc)+(8-rr),col=hl[q];
-    h+=`<div class="sq ${(r+c)%2?'d':'l'}" data-q="${q}"${col?` style="background:${col}"`:''}>${p?`<span class="${p.color}">${GL[p.type]}\uFE0E</span>`:''}</div>`;
+    h+=`<div class="sq ${(r+c)%2?'d':'l'}" data-q="${q}"${col?` style="background:${col}"`:''}>${p?`<svg class="pc ${p.color}" viewBox="0 0 100 100"><use href="#p-${p.type}"/></svg>`:''}${c===0?`<i class="cr">${8-rr}</i>`:''}${r===7?`<i class="cf">${String.fromCharCode(97+cc)}</i>`:''}</div>`;
   }
   let a='';
   if(ar){const [x1,y1]=xy(ar[0],flip),[x2,y2]=xy(ar[1],flip);
@@ -209,35 +234,52 @@ function show(){
 }
 
 /* ---------- play ---------- */
-let P=null,pc='w',psel=null,pLvl=5,busy=false;
-const LV=[['Beginner (~600)',0],['~800',2],['~1000',4],['~1200',6],['~1500',9],['~1800',12],['Strong (2000+)',17]];
-function playUI(){
-  $('play').innerHTML=`<p>Levels are approximate. Pick one, then tap a piece and its destination.</p>
-  <div class="ctl"><select id="lv">${LV.map(l=>`<option value="${l[1]}">${l[0]}</option>`).join('')}</select><select id="pcol"><option value="w">I play White</option><option value="b">I play Black</option></select></div>
-  <div class="ctl"><button onclick="newGame()">New game</button><button class="alt" onclick="undo()">Undo move</button></div><div id="pb"></div><div class="st" id="ps"></div>`;
-  $('lv').value=pLvl;$('pcol').value=pc;
-  if(!P)newGame();else{tabClick=pClick;drawP()}
+const LV=[['New to Chess',100,0],['Beginner',400,1],['Novice',600,3],['Intermediate',900,5],['Intermediate II',1200,8],['Advanced',1600,12],['Expert',2000,17]];
+let P=null,pc='w',psel=null,pLvl=LV[3],pPick='r',busy=false,pMode='setup',pOver=false,prevCp=0,coachMsg='';
+const coach=t=>`<div class="coach"><div class="av">♞</div><div class="bub">${t}</div></div>`;
+function playUI(){tabClick=null;if(pMode==='game'&&P){tabClick=pClick;drawP()}else setupUI()}
+function setupUI(){
+  const cp=(k,g,c)=>`<div class="cp ${c} ${pPick===k?'on':''}" onclick="pickC('${k}')">${g}</div>`;
+  $('play').innerHTML=coach("Nice to see you! When you're ready, let's play a game. I'll point out mistakes as we go.")+
+  `<div class="cps">${cp('w','♚','cpw')}${cp('r','?','cpr')}${cp('b','♚','cpb')}</div>`+
+  LV.map((l,i)=>`<div class="lv ${l===pLvl?'on':''}" onclick="pickL(${i})">${l[0]}<span>(${l[1]})</span></div>`).join('')+
+  `<button class="big" onclick="startGame()">Play</button>`;
 }
-async function newGame(){pLvl=+$('lv').value;pc=$('pcol').value;P=new Chess();psel=null;tabClick=pClick;drawP();if(pc==='b')await engReply()}
+const pickC=k=>{pPick=k;setupUI()},pickL=i=>{pLvl=LV[i];setupUI()};
+function startGame(){
+  pc=pPick==='r'?(Math.random()<.5?'w':'b'):pPick;P=new Chess();psel=null;pMode='game';pOver=false;prevCp=0;
+  coachMsg=`You are ${pc==='w'?'White':'Black'}. Good luck!`;tabClick=pClick;drawP();
+  if(pc==='b')engReply(false);
+}
 function drawP(){
   const hl={},h=P.history({verbose:true});
-  if(h.length){const l=h[h.length-1];hl[l.from]=hl[l.to]='rgba(217,164,65,.45)'}
+  if(h.length){const l=h[h.length-1];hl[l.from]=hl[l.to]='rgba(255,235,59,.5)'}
   hlMoves(P,psel,hl);
-  $('pb').innerHTML=board(P.fen(),hl,null,pc==='b');
-  $('ps').textContent=P.in_checkmate()?'Checkmate — '+(P.turn()===pc?'you lost.':'you won!'):P.game_over()?'Game drawn.':busy?'Engine thinking…':'Your move'+(P.in_check()?' (you are in check)':'');
+  const st=pOver?'You resigned.':P.in_checkmate()?'Checkmate — '+(P.turn()===pc?'you lost.':'you won!'):P.game_over()?'Game drawn.':busy?'Coach is thinking…':'Your move'+(P.in_check()?' (you are in check)':'');
+  $('play').innerHTML=coach(coachMsg)+`<div class="pl">Coach · ${pLvl[0]} (${pLvl[1]})</div>`+board(P.fen(),hl,null,pc==='b')+`<div class="pl">You · ${st}</div>
+  <div class="ctl"><button class="alt" onclick="undo()">Undo</button><button class="alt" onclick="resign()">Resign</button><button onclick="endGame()">New game</button></div>`;
 }
 function pClick(q){
-  if(busy||P.game_over()||P.turn()!==pc)return;
-  if(psel&&P.move({from:psel,to:q,promotion:'q'})){psel=null;drawP();return engReply()}
+  if(busy||pOver||P.game_over()||P.turn()!==pc)return;
+  if(psel&&P.move({from:psel,to:q,promotion:'q'})){psel=null;if(P.game_over()){coachMsg=P.in_checkmate()?'Checkmate! Well played.':'The game is drawn.';return drawP()}drawP();return engReply(true)}
   const p=P.get(q);psel=p&&p.color===pc?q:null;drawP();
 }
-async function engReply(){
+async function engReply(feedback){
   if(P.game_over())return drawP();
-  busy=true;$('ps').textContent='Engine thinking…';
-  try{await engine();const r=await engMove(P.fen(),pLvl),u=r.best;P.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]})}catch(e){say('Engine error: '+e.message)}
+  busy=true;drawP();let fb='';
+  try{
+    await engine();
+    const r=await engMove(P.fen(),pLvl[2],300+pLvl[2]*40),u=r.best;
+    if(feedback){const loss=clip(r.cp)-clip(prevCp);
+      fb=loss>=300?'Ouch, that was a blunder. Check what your last move left undefended. ':loss>=150?`That was a mistake (about ${(loss/100).toFixed(1)} pawns). `:loss>=60?'Slight inaccuracy, there was a better option. ':'Good move. '}
+    prevCp=r.cp;const m=P.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});
+    coachMsg=fb+`I played ${m.san}.`+(P.in_checkmate()?' Checkmate.':P.in_check()?' Check!':'');
+  }catch(e){coachMsg='Engine error: '+e.message}
   busy=false;drawP();
 }
-function undo(){if(!busy&&P.history().length>=2){P.undo();P.undo();psel=null;drawP()}}
+function undo(){if(!busy&&!pOver&&P.history().length>=2){P.undo();P.undo();psel=null;prevCp=0;coachMsg='Move taken back. Try again.';drawP()}}
+function resign(){if(!busy&&!pOver){pOver=true;coachMsg='You resigned. Start a new game when you are ready.';drawP()}}
+function endGame(){pMode='setup';P=null;pOver=false;tabClick=null;setupUI()}
 
 /* ---------- puzzles ---------- */
 let Z=null,ZG=null,zsel=null,zres=0,zmsg='',zs={ok:0,n:0};
