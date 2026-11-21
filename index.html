@@ -36,7 +36,7 @@ button:disabled{opacity:.5}
 .bd svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .sq{display:flex;align-items:center;justify-content:center;aspect-ratio:1/1;min-width:0;min-height:0;overflow:hidden;font-size:min(10.5vw,56px);line-height:1}
 .l{background:#eeeed2}.d{background:#769656}
-.pc{width:88%;height:88%;pointer-events:none}
+.pc{width:88%;height:88%;pointer-events:none;-webkit-user-drag:none}
 .pc.w{--pf:#fafaf8;--ps:#6b6a66}.pc.b{--pf:#4a4846;--ps:#171615}
 .sq{position:relative}
 .cr,.cf{position:absolute;font:700 10px/1 -apple-system,system-ui,sans-serif;font-style:normal;pointer-events:none}
@@ -62,8 +62,16 @@ button{min-height:44px}
 .lv span{color:var(--dim)}
 .big{width:100%;padding:16px;font-size:20px;box-shadow:0 4px 0 #5d8a35;margin-top:6px}
 .pl{color:var(--dim);font-size:14px;margin:6px 2px}
+.wk{background:var(--panel);border-radius:10px;padding:12px;margin-bottom:8px}.wk small{color:var(--dim)}
+.chips{display:flex;gap:6px;overflow-x:auto;margin-bottom:10px}.chips button{flex:none;padding:8px 12px;font-size:13px;min-height:36px}
+.opt{background:var(--panel);border-radius:12px;padding:18px 16px;margin-bottom:10px;border:2px solid transparent;cursor:pointer}
+.opt b{font-size:19px;display:block}.opt small{color:var(--dim)}
+.cp{flex-direction:column;gap:2px;font-size:26px;height:64px}.cp small{font-size:11px;font-weight:700}
+details{margin-top:22px}summary{background:var(--panel);padding:14px;border-radius:10px;cursor:pointer;font-weight:600}
+.wk{cursor:pointer}
+a.btn{display:flex;align-items:center;justify-content:center;flex:1;padding:10px 8px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;min-height:44px;text-align:center}
 </style></head><body><svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-<symbol id="p-p" viewBox="0 0 100 100"><g fill="var(--pf)" stroke="var(--ps)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><circle cx="50" cy="32" r="12"/><rect x="40" y="43" width="20" height="7" rx="3"/><path d="M38 80C38 64 42 56 46 50H54C58 56 62 64 62 80Z"/><rect x="30" y="78" width="40" height="9" rx="3"/></g></symbol>
+<symbol id="p-p" viewBox="0 0 100 100"><g fill="var(--pf)" stroke="var(--ps)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><path d="M41 49C43 60 40 70 30 80H70C60 70 57 60 59 49Z"/><ellipse cx="50" cy="47" rx="14" ry="5"/><circle cx="50" cy="31" r="13"/><rect x="27" y="78" width="46" height="10" rx="4"/></g></symbol>
 <symbol id="p-r" viewBox="0 0 100 100"><g fill="var(--pf)" stroke="var(--ps)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><path d="M28 87V79L35 72V44L29 38V20H41V28H46V20H54V28H59V20H71V38L65 44V72L72 79V87Z"/><path d="M35 44H65M35 72H65" fill="none"/></g></symbol>
 <symbol id="p-n" viewBox="0 0 100 100"><g fill="var(--pf)" stroke="var(--ps)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><path d="M30 87C30 68 36 56 48 47C42 47 36 51 29 57L22 52C27 40 35 31 44 27L46 16L55 24C71 28 75 46 73 63L71 87Z"/><circle cx="52" cy="37" r="2.8" fill="var(--ps)" stroke="none"/></g></symbol>
 <symbol id="p-b" viewBox="0 0 100 100"><g fill="var(--pf)" stroke="var(--ps)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><circle cx="50" cy="15" r="5"/><path d="M50 21C63 31 66 40 60 48C64 56 64 65 60 72H72L72 87H28L28 72H40C36 65 36 56 40 48C34 40 37 31 50 21Z"/><path d="M45 38L55 48" fill="none"/></g></symbol>
@@ -77,7 +85,13 @@ button{min-height:44px}
 <div id="app" hidden>
 <nav id="tabs"><button data-t="review">Review Games</button><button data-t="play">Play</button><button data-t="puz">Puzzles</button></nav>
 <div id="msg"></div>
-<section id="review"><select id="mo"></select><div id="games" style="margin-top:10px"></div><div id="rv"></div><div id="stats"></div></section>
+<section id="review">
+<h2 style="margin-top:8px">Review</h2>
+<div class="ctl"><select id="bn" style="flex:2"><option value="g10">Last 10 games</option><option value="g20">Last 20 games</option><option value="l10">Last 10 losses</option><option value="l20">Last 20 losses</option></select><button onclick="batch()">Analyze</button><button class="alt" style="flex:0 0 70px" onclick="stopBatch=true">Stop</button></div>
+<p>Keep the screen on while it runs. Each game takes a minute or two.</p>
+<div id="stats"></div><div id="rv"></div>
+<details id="gl"><summary>All games: open the list to review one</summary><select id="mo" style="width:100%;margin-top:10px"></select><div id="games" style="margin-top:10px"></div></details>
+</section>
 <section id="play" hidden></section>
 <section id="puz" hidden></section>
 </div></main>
@@ -86,7 +100,7 @@ button{min-height:44px}
 const $=id=>document.getElementById(id),V={p:1,n:3,b:3,r:5,q:9,k:0};
 const LBL={blunder:['Blunder','var(--red)'],mistake:['Mistake','var(--org)'],inacc:['Inaccuracy','var(--yel)']};
 const GL={k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
-let user=localStorage.getItem('ccuser')||'',tabClick=null,sf,resolver,last=0,skill=20,gamesList=[];
+let useImg=false,user=localStorage.getItem('ccuser')||'',tabClick=null,sf,resolver,last=0,skill=20,gamesList=[];
 const st=()=>JSON.parse(localStorage.getItem('cc_'+user)||'{"done":[],"moves":0,"n":{},"cause":{},"phase":{}}');
 const pz=()=>JSON.parse(localStorage.getItem('pz_'+user)||'[]');
 const say=t=>$('msg').textContent=t;
@@ -119,7 +133,7 @@ async function engine(){
   sf.postMessage('uci');
 }
 const setSkill=n=>{if(n!==skill){sf.postMessage('setoption name Skill Level value '+n);skill=n}};
-const evalFen=fen=>new Promise(r=>{setSkill(20);resolver=r;last=0;sf.postMessage('position fen '+fen);sf.postMessage('go depth 10')});
+const evalFen=fen=>new Promise(r=>{setSkill(20);resolver=r;last=0;sf.postMessage('position fen '+fen);sf.postMessage('go depth '+depth)});
 const engMove=(fen,l,ms=700)=>new Promise(r=>{setSkill(l);resolver=r;last=0;sf.postMessage('position fen '+fen);sf.postMessage('go movetime '+ms)});
 const clip=x=>Math.max(-1000,Math.min(1000,x));
 
@@ -129,7 +143,7 @@ function board(fen,hl,ar,flip){
   const b=new Chess(fen).board();let h='';
   for(let r=0;r<8;r++)for(let c=0;c<8;c++){
     const rr=flip?7-r:r,cc=flip?7-c:c,p=b[rr][cc],q=String.fromCharCode(97+cc)+(8-rr),col=hl[q];
-    h+=`<div class="sq ${(r+c)%2?'d':'l'}" data-q="${q}"${col?` style="background:${col}"`:''}>${p?`<svg class="pc ${p.color}" viewBox="0 0 100 100"><use href="#p-${p.type}"/></svg>`:''}${c===0?`<i class="cr">${8-rr}</i>`:''}${r===7?`<i class="cf">${String.fromCharCode(97+cc)}</i>`:''}</div>`;
+    h+=`<div class="sq ${(r+c)%2?'d':'l'}" data-q="${q}"${col?` style="background:${col}"`:''}>${p?(useImg?`<img class="pc" alt="" draggable="false" src="pieces/${p.color}${p.type.toUpperCase()}.svg">`:`<svg class="pc ${p.color}" viewBox="0 0 100 100"><use href="#p-${p.type}"/></svg>`):''}${c===0?`<i class="cr">${8-rr}</i>`:''}${r===7?`<i class="cf">${String.fromCharCode(97+cc)}</i>`:''}</div>`;
   }
   let a='';
   if(ar){const [x1,y1]=xy(ar[0],flip),[x2,y2]=xy(ar[1],flip);
@@ -139,6 +153,28 @@ function board(fen,hl,ar,flip){
 const hlMoves=(g,s,hl)=>{if(s){hl[s]='rgba(217,164,65,.6)';g.moves({square:s,verbose:true}).forEach(m=>hl[m.to]='rgba(217,164,65,.35)')}};
 
 /* ---------- review ---------- */
+const LOSS=['checkmated','resigned','timeout','abandoned','lose'],DEF='Positional or tactical slip';
+const TIPS={'Left a piece hanging':'Before every move ask: what can my opponent capture after this? Make sure each piece is protected or safe.',
+'Missed a free capture':'Scan for captures first. Is anything of theirs undefended?',
+'Let a winning position slip':'When ahead, trade pieces and check your opponent\'s threats before attacking.',
+'Allowed a fork':'Before moving, look for squares where a knight or queen could attack two of your pieces at once.',
+'Allowed checkmate':'Check your king\'s safety: list every check and capture your opponent has before you move.',
+'Missed a tactic':'Look at every check, capture and threat for both sides before playing a quiet move.',
+'Blundered in time trouble':'Your blunders come when your clock is low. Play the opening faster to keep time for the middlegame.',
+'Opening mistake':'Develop your pieces, castle early, and avoid moving one piece twice or grabbing pawns.',
+[DEF]:'Compare your move with the better one: what does it improve (activity, king safety, a threat)?'};
+const tip=c=>TIPS[c]||TIPS[DEF],causeOf=p=>p.cause||DEF;
+const YQ={'Left a piece hanging':'chess how to stop hanging pieces and blundering',
+'Missed a free capture':'chess how to spot free pieces and tactics',
+'Let a winning position slip':'chess how to convert a winning position',
+'Allowed a fork':'chess knight fork tactics how to avoid forks',
+'Allowed checkmate':'chess king safety back rank mate how to avoid',
+'Missed a tactic':'chess tactics pattern recognition how to improve',
+'Blundered in time trouble':'chess time management tips blitz rapid',
+'Opening mistake':'chess opening principles for beginners',
+[DEF]:'chess how to find the best move thinking process'};
+const yt=q=>'https://www.youtube.com/results?search_query='+encodeURIComponent(q),ytc=c=>yt(YQ[c]||YQ[DEF]);
+let depth=10,stopBatch=false,prog='',R=null;
 async function loadMonths(){
   say('Loading games…');
   try{
@@ -161,34 +197,54 @@ async function loadGames(){
     say('');show();
   }catch(e){say('Could not load that month.')}
 }
+async function recordGame(x){
+  const color=x.white.username.toLowerCase()===user?'w':'b',r=await analyze(x.pgn,color),s=st();
+  if(!s.done.includes(x.url)){
+    s.open=s.open||{};s.done.push(x.url);s.moves+=r.mine;const p=pz();
+    r.list.forEach(m=>{s.n[m.k]=(s.n[m.k]||0)+1;s.cause[m.cause]=(s.cause[m.cause]||0)+1;s.phase[m.phase]=(s.phase[m.phase]||0)+1;
+      if(m.phase==='Opening'&&m.k!=='inacc'&&r.op)s.open[r.op]=(s.open[r.op]||0)+1;
+      if(m.k!=='inacc')p.push({fen:r.fen[m.i],bu:m.bu,san:m.bestSan,c:color,cause:m.cause,ok:0})});
+    localStorage.setItem('cc_'+user,JSON.stringify(s));localStorage.setItem('pz_'+user,JSON.stringify(p.slice(-300)));
+  }
+  return r;
+}
 async function run(i,btn){
-  btn.disabled=true;const x=gamesList[i],color=x.white.username.toLowerCase()===user?'w':'b';
-  try{
-    say('Starting engine…');await engine();
-    const r=await analyze(x.pgn,color);renderReview(r,x);
-    const s=st();
-    if(!s.done.includes(x.url)){
-      s.done.push(x.url);s.moves+=r.mine;
-      r.list.forEach(m=>{s.n[m.k]=(s.n[m.k]||0)+1;s.cause[m.cause]=(s.cause[m.cause]||0)+1;s.phase[m.phase]=(s.phase[m.phase]||0)+1});
-      localStorage.setItem('cc_'+user,JSON.stringify(s));
-      const p=pz();r.list.filter(m=>m.k!=='inacc').forEach(m=>p.push({fen:r.fen[m.i],bu:m.bu,san:m.bestSan,c:color}));
-      localStorage.setItem('pz_'+user,JSON.stringify(p.slice(-150)));
-    }
-    say('');show();btn.textContent='✓ Review';
-  }catch(err){say('Review failed: '+err.message)}
+  btn.disabled=true;
+  try{say('Starting engine…');await engine();depth=10;prog='';const r=await recordGame(gamesList[i]);renderReview(r,gamesList[i]);say('');show();btn.textContent='✓ Review'}
+  catch(err){say('Review failed: '+err.message)}
   btn.disabled=false;
+}
+async function batch(){
+  const v=$('bn').value,n=+v.slice(1),lossOnly=v[0]==='l';stopBatch=false;
+  try{
+    say('Finding your recent games…');
+    const a=await (await fetch(`https://api.chess.com/pub/player/${encodeURIComponent(user)}/games/archives`)).json(),out=[];
+    for(const u of (a.archives||[]).slice(-6).reverse()){
+      const g=await (await fetch(u)).json();
+      g.games.slice().reverse().forEach(x=>{if(x.pgn&&x.rules==='chess'){const me=x.white.username.toLowerCase()===user?x.white:x.black;if(!lossOnly||LOSS.includes(me.result))out.push(x)}});
+      if(out.length>=n)break;
+    }
+    const todo=out.slice(0,n);if(!todo.length)return say('No matching games found.');
+    await engine();depth=8;
+    for(let k=0;k<todo.length&&!stopBatch;k++){prog=`Game ${k+1} of ${todo.length}: `;if(!st().done.includes(todo[k].url))await recordGame(todo[k]);show()}
+    say(stopBatch?'Stopped. Results so far are below.':`Done. Reviewed ${todo.length} games.`);
+  }catch(e){say('Batch failed: '+e.message)}
+  depth=10;prog='';
 }
 async function analyze(pgn,color){
   const g=new Chess();if(!g.load_pgn(pgn))throw new Error('could not read game');
   const mv=g.history({verbose:true}),c=new Chess(),ev=[],fen=[];
+  const clk=[...pgn.matchAll(/\[%clk (\d+):(\d+):([\d.]+)\]/g)].map(m=>+m[1]*3600+ +m[2]*60+ +m[3]);
+  const em=pgn.match(/\[ECOUrl "([^"]+)"/),op=em?decodeURIComponent(em[1].split('/').pop()).split(/-\d/)[0].replace(/-/g,' '):'';
   for(let i=0;i<=mv.length;i++){
-    say(`Analyzing position ${i+1} of ${mv.length+1}…`);
+    say(`${prog}analyzing position ${i+1} of ${mv.length+1}…`);
     fen.push(c.fen());
     ev.push(c.game_over()?{cp:c.in_checkmate()?-1e4:0,best:null}:await evalFen(c.fen()));
     if(i<mv.length)c.move(mv[i]);
   }
   const list=[];let mine=0;
-  const cap=(f,u)=>{if(!u)return null;return new Chess(f).move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]})};
+  const after=(f,u)=>{if(!u)return null;const t=new Chess(f),m=t.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});return m?{m,t}:null};
+  const forks=(t,q)=>{const f=t.fen().split(' ');f[1]=f[1]==='w'?'b':'w';f[3]='-';try{return new Set(new Chess(f.join(' ')).moves({square:q,verbose:true}).filter(x=>x.captured&&V[x.captured]>=3).map(x=>x.to)).size}catch(e){return 0}};
   mv.forEach((m,i)=>{
     if(m.color!==color)return;mine++;
     const loss=Math.max(0,clip(ev[i].cp)-clip(-ev[i+1].cp));
@@ -196,23 +252,27 @@ async function analyze(pgn,color){
     const k=loss>=200?'blunder':loss>=100?'mistake':'inacc';
     const heavy=(fen[i].split(' ')[0].match(/[nbrqNBRQ]/g)||[]).length;
     const phase=i<20?'Opening':heavy<=6?'Endgame':'Middlegame';
-    let cause='Positional or tactical slip';
-    const best=cap(fen[i],ev[i].best),reply=cap(fen[i+1],ev[i+1].best);
-    if(reply&&reply.captured&&V[reply.captured]>=3&&loss>=100)cause='Left a piece hanging';
-    else if(best&&best.captured&&V[best.captured]>=3&&loss>=100)cause='Missed a free capture';
+    const bo=after(fen[i],ev[i].best),re=after(fen[i+1],ev[i+1].best),b=bo&&bo.m,rp=re&&re.m;
+    let cause=DEF;
+    if(rp&&re.t.in_checkmate())cause='Allowed checkmate';
+    else if(clk[i]!==undefined&&clk[i]<10&&loss>=100)cause='Blundered in time trouble';
+    else if(rp&&rp.captured&&V[rp.captured]>=3&&loss>=100)cause='Left a piece hanging';
+    else if(b&&b.captured&&V[b.captured]>=3&&loss>=100)cause='Missed a free capture';
+    else if(rp&&!rp.captured&&loss>=100&&forks(re.t,rp.to)>=2)cause='Allowed a fork';
+    else if(b&&(/[+#]/.test(b.san)||b.captured)&&loss>=150)cause='Missed a tactic';
     else if(ev[i].cp>=300&&ev[i+1].cp>=200)cause='Let a winning position slip';
-    list.push({i,bu:ev[i].best,n:Math.floor(i/2)+1,san:m.san,k,loss,phase,cause,bestSan:best?best.san:'—'});
+    else if(phase==='Opening'&&loss>=100)cause='Opening mistake';
+    list.push({i,bu:ev[i].best,n:Math.floor(i/2)+1,san:m.san,k,loss,phase,cause,bestSan:b?b.san:'—'});
   });
-  return {list,mine,fen,mv,color};
+  return {list,mine,fen,mv,color,op};
 }
-let R=null;
 function view(i,mode){
   const {fen,mv,color,list}=R;i=Math.max(0,Math.min(mv.length,i));
   const m=list.find(x=>x.i===i),last=i>0?mv[i-1]:null;
   let f=fen[i],hl={},ar=null,cap=`Move ${Math.ceil(i/2)} of ${Math.ceil(mv.length/2)}`;
-  if(last&&mode==='cur')hl[last.from]=hl[last.to]='rgba(217,164,65,.45)';
+  if(last&&mode==='cur')hl[last.from]=hl[last.to]='rgba(255,235,59,.5)';
   if(m&&mode==='cur')cap=`<b>${LBL[m.k][0]}</b> coming up. What would you play here?`;
-  if(m&&mode==='played'){const p=mv[i];f=fen[i+1];hl[p.from]=hl[p.to]='rgba(224,100,90,.6)';cap=`You played <b>${m.san}</b>. ${m.cause}.`}
+  if(m&&mode==='played'){const p=mv[i];f=fen[i+1];hl[p.from]=hl[p.to]='rgba(224,100,90,.6)';cap=`You played <b>${m.san}</b>. ${m.cause}. ${tip(m.cause)} <a href="${ytc(m.cause)}" target="_blank" rel="noopener" style="color:var(--gold)">▶ Watch a lesson</a>`}
   if(m&&mode==='better'){const u=m.bu,t=new Chess(fen[i]);t.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});f=t.fen();
     hl[u.slice(0,2)]=hl[u.slice(2,4)]='rgba(79,191,106,.55)';ar=[u.slice(0,2),u.slice(2,4)];cap=`Better: <b>${m.bestSan}</b>`}
   $('bv').innerHTML=board(f,hl,ar,color==='b')+`<div id="cap">${cap}</div>
@@ -227,29 +287,51 @@ function renderReview(r,x){
   $('rv').scrollIntoView({behavior:'smooth'});
 }
 function show(){
-  const s=st();if(!s.done.length){$('stats').innerHTML='';return}
+  const s=st();s.open=s.open||{};
+  if(!s.done.length){$('stats').innerHTML='<p>No games reviewed yet. Choose how many games above and tap Analyze to find your top mistakes.</p>';return}
   const tot=Object.values(s.n).reduce((a,b)=>a+b,0)||1;
-  const bars=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${k} (${v})<div class="bar"><i style="width:${v/tot*100}%"></i></div>`).join('');
-  $('stats').innerHTML=`<h2>Your patterns across ${s.done.length} game${s.done.length>1?'s':''}</h2><p>${s.moves} of your moves reviewed, ${tot} errors.</p><b>Most common causes</b>${bars(s.cause)}<br><b>Where they happen</b>${bars(s.phase)}`;
+  const bars=o=>Object.entries(o).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`${k} (${v})<div class="bar"><i style="width:${v/tot*100}%"></i></div>`).join('');
+  const top=Object.entries(s.cause).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  $('stats').innerHTML=`<h2>Top mistakes</h2><p>${s.done.length} games reviewed · ${tot} errors found. Solve puzzles to improve, or play a similar game with the coach.</p>`+
+  top.map(([c,v])=>`<div class="wk" style="cursor:default"><b>${c}</b> · ${v}×<br><small>${tip(c)}</small><div class="ctl"><button onclick="trainP('${c}')">Solve puzzles</button><button class="alt" onclick="drill('${c}')">Play with coach</button><a class="btn alt" href="${ytc(c)}" target="_blank" rel="noopener">▶ Watch lessons</a></div></div>`).join('')+
+  `<b>Where they happen</b><br>${bars(s.phase)}`+(Object.keys(s.open).length?`<br><b>Openings where you slip</b><br>${bars(s.open)}<div class="ctl">${Object.entries(s.open).sort((a,b)=>b[1]-a[1]).slice(0,2).map(([o])=>`<a class="btn alt" href="${yt(o+' chess opening how to play and avoid traps')}" target="_blank" rel="noopener">▶ Learn: ${o}</a>`).join('')}</div>`:'');
 }
 
 /* ---------- play ---------- */
 const LV=[['New to Chess',100,0],['Beginner',400,1],['Novice',600,3],['Intermediate',900,5],['Intermediate II',1200,8],['Advanced',1600,12],['Expert',2000,17]];
-let P=null,pc='w',psel=null,pLvl=LV[3],pPick='r',busy=false,pMode='setup',pOver=false,prevCp=0,coachMsg='';
+let P=null,pc='w',psel=null,pLvl=LV[3],pPick='r',busy=false,pMode='setup',pOver=false,prevCp=0,coachMsg='',drillZ=null;
 const coach=t=>`<div class="coach"><div class="av">♞</div><div class="bub">${t}</div></div>`;
-function playUI(){tabClick=null;if(pMode==='game'&&P){tabClick=pClick;drawP()}else setupUI()}
-function setupUI(){
-  const cp=(k,g,c)=>`<div class="cp ${c} ${pPick===k?'on':''}" onclick="pickC('${k}')">${g}</div>`;
-  $('play').innerHTML=coach("Nice to see you! When you're ready, let's play a game. I'll point out mistakes as we go.")+
-  `<div class="cps">${cp('w','♚','cpw')}${cp('r','?','cpr')}${cp('b','♚','cpb')}</div>`+
-  LV.map((l,i)=>`<div class="lv ${l===pLvl?'on':''}" onclick="pickL(${i})">${l[0]}<span>(${l[1]})</span></div>`).join('')+
-  `<button class="big" onclick="startGame()">Play</button>`;
+const back='<button class="alt" style="margin-bottom:6px" onclick="home(\'home\')">‹ Back</button>';
+function home(m){pMode=m;playUI()}
+function playUI(){tabClick=null;if(pMode==='game'&&P){tabClick=pClick;drawP()}else if(pMode==='level')levelUI();else if(pMode==='weak')weakUI();else homeUI()}
+function homeUI(){
+  $('play').innerHTML=coach("Hi! Want a normal game, or shall we work on the mistakes you keep making?")+
+  `<div class="opt" onclick="home('level')"><b>Play a game</b><small>Choose a rating and your color</small></div>
+   <div class="opt" onclick="home('weak')"><b>Work on Weak Spots</b><small>Replay positions from your own games where you went wrong</small></div>`;
 }
-const pickC=k=>{pPick=k;setupUI()},pickL=i=>{pLvl=LV[i];setupUI()};
-function startGame(){
-  pc=pPick==='r'?(Math.random()<.5?'w':'b'):pPick;P=new Chess();psel=null;pMode='game';pOver=false;prevCp=0;
-  coachMsg=`You are ${pc==='w'?'White':'Black'}. Good luck!`;tabClick=pClick;drawP();
-  if(pc==='b')engReply(false);
+function levelUI(){
+  const cp=(k,g,c,l)=>`<div class="cp ${c} ${pPick===k?'on':''}" onclick="pickC('${k}')">${g}<small>${l}</small></div>`;
+  $('play').innerHTML=back+coach("Choose my rating, then your color.")+
+  LV.map((l,i)=>`<div class="lv ${l===pLvl?'on':''}" onclick="pickL(${i})">${l[0]}<span>(${l[1]})</span></div>`).join('')+
+  `<div class="cps" style="margin-top:10px">${cp('w','♚','cpw','White')}${cp('r','?','cpr','Toss')}${cp('b','♚','cpb','Black')}</div><button class="big" onclick="startGame()">Continue</button>`;
+}
+function weakUI(){
+  const t=Object.entries(st().cause).sort((a,b)=>b[1]-a[1]);
+  $('play').innerHTML=back+coach(t.length?"Pick a weak spot. I'll set up a position from one of your games where it happened, then we'll play on.":"I don't know your weak spots yet. Review some of your games first.")+
+  (t.length?`<p>Coach level: <select id="wl" onchange="pLvl=LV[this.value]">${LV.map((l,i)=>`<option value="${i}" ${l===pLvl?'selected':''}>${l[0]} (${l[1]})</option>`).join('')}</select></p>`+
+   t.map(([c,v])=>`<div class="wk" onclick="drill('${c}')"><b>${c}</b> · ${v}×<br><small>${tip(c)}</small></div>`).join(''):`<button class="big" onclick="go('review')">Go to Review</button>`);
+}
+const pickC=k=>{pPick=k;levelUI()},pickL=i=>{pLvl=LV[i];levelUI()};
+function drill(c){
+  const a=pz().filter(p=>causeOf(p)===c);if(!a.length)return say('No saved positions for that yet.');
+  go('play');startGame(a[Math.floor(Math.random()*a.length)]);
+}
+function startGame(z){
+  drillZ=z||null;
+  if(z){pc=z.c;P=new Chess(z.fen)}else{pc=pPick==='r'?(Math.random()<.5?'w':'b'):pPick;P=new Chess()}
+  psel=null;pMode='game';pOver=false;prevCp=0;
+  coachMsg=z?`Let's replay a spot where you slipped (${causeOf(z)}). Can you find a better move than last time?`:`You are ${pc==='w'?'White':'Black'}. Good luck!`;
+  tabClick=pClick;drawP();if(P.turn()!==pc)engReply(false);
 }
 function drawP(){
   const hl={},h=P.history({verbose:true});
@@ -261,17 +343,20 @@ function drawP(){
 }
 function pClick(q){
   if(busy||pOver||P.game_over()||P.turn()!==pc)return;
-  if(psel&&P.move({from:psel,to:q,promotion:'q'})){psel=null;if(P.game_over()){coachMsg=P.in_checkmate()?'Checkmate! Well played.':'The game is drawn.';return drawP()}drawP();return engReply(true)}
+  if(psel){const m=P.move({from:psel,to:q,promotion:'q'});
+    if(m){psel=null;if(P.game_over()){coachMsg=P.in_checkmate()?'Checkmate! Well played.':'The game is drawn.';return drawP()}drawP();return engReply(true,m.from+m.to+(m.promotion||''))}}
   const p=P.get(q);psel=p&&p.color===pc?q:null;drawP();
 }
-async function engReply(feedback){
+async function engReply(feedback,uci){
   if(P.game_over())return drawP();
   busy=true;drawP();let fb='';
   try{
     await engine();
     const r=await engMove(P.fen(),pLvl[2],300+pLvl[2]*40),u=r.best;
     if(feedback){const loss=clip(r.cp)-clip(prevCp);
-      fb=loss>=300?'Ouch, that was a blunder. Check what your last move left undefended. ':loss>=150?`That was a mistake (about ${(loss/100).toFixed(1)} pawns). `:loss>=60?'Slight inaccuracy, there was a better option. ':'Good move. '}
+      if(drillZ&&!drillZ.done){drillZ.done=1;
+        fb=uci===drillZ.bu?'Exactly, that is the move you missed in your game! ':loss>=60?`In your real game this went wrong. The better move was ${drillZ.san}. ${tip(causeOf(drillZ))} `:`Fine move, though the engine preferred ${drillZ.san}. `}
+      else fb=loss>=300?'Ouch, that was a blunder. Check what your last move left undefended. ':loss>=150?`That was a mistake (about ${(loss/100).toFixed(1)} pawns). `:loss>=60?'Slight inaccuracy, there was a better option. ':'Good move. '}
     prevCp=r.cp;const m=P.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});
     coachMsg=fb+`I played ${m.san}.`+(P.in_checkmate()?' Checkmate.':P.in_check()?' Check!':'');
   }catch(e){coachMsg='Engine error: '+e.message}
@@ -279,30 +364,35 @@ async function engReply(feedback){
 }
 function undo(){if(!busy&&!pOver&&P.history().length>=2){P.undo();P.undo();psel=null;prevCp=0;coachMsg='Move taken back. Try again.';drawP()}}
 function resign(){if(!busy&&!pOver){pOver=true;coachMsg='You resigned. Start a new game when you are ready.';drawP()}}
-function endGame(){pMode='setup';P=null;pOver=false;tabClick=null;setupUI()}
+function endGame(){pMode='home';P=null;pOver=false;drillZ=null;tabClick=null;homeUI()}
 
 /* ---------- puzzles ---------- */
-let Z=null,ZG=null,zsel=null,zres=0,zmsg='',zs={ok:0,n:0};
+let Z=null,ZG=null,zsel=null,zres=0,zmsg='',zs={ok:0,n:0},zf='all';
+function trainP(c){zf=c;Z=null;go('puz')}
+function mark(ok){const all=pz(),p=all.find(x=>x.fen===Z.fen&&x.bu===Z.bu);if(p){p.ok=ok?(p.ok||0)+1:0;localStorage.setItem('pz_'+user,JSON.stringify(all))}}
 function puzNext(first){
-  const a=pz();tabClick=null;
-  if(!a.length){$('puz').innerHTML='<p>No puzzles yet. Review a game first and your own mistakes and blunders will appear here as puzzles.</p>';return}
-  if(!(first&&Z)){Z=a[Math.floor(Math.random()*a.length)];ZG=new Chess(Z.fen);zsel=null;zres=0;zmsg=`You are ${Z.c==='w'?'White':'Black'}. Find the best move.`}
+  const all=pz();tabClick=null;
+  if(!all.length){$('puz').innerHTML='<p>No puzzles yet. Review a game (or your last losses) first and your own mistakes become puzzles here.</p>';return}
+  let a=all.filter(p=>zf==='all'||causeOf(p)===zf);if(!a.length){zf='all';a=all}
+  if(!(first&&Z)){const mn=Math.min(...a.map(p=>p.ok||0)),b=a.filter(p=>(p.ok||0)===mn);
+    Z=b[Math.floor(Math.random()*b.length)];ZG=new Chess(Z.fen);zsel=null;zres=0;zmsg=`You are ${Z.c==='w'?'White':'Black'}. Find the best move.`}
   tabClick=zClick;drawZ();
 }
 function drawZ(){
-  const hl={};hlMoves(ZG,zsel,hl);
-  $('puz').innerHTML=board(ZG.fen(),hl,zres===2?[Z.bu.slice(0,2),Z.bu.slice(2,4)]:null,Z.c==='b')+`<div id="cap">${zmsg}</div><div class="ctl"><button onclick="puzNext()">Next puzzle</button></div><p>Solved ${zs.ok} of ${zs.n} this session · ${pz().length} puzzles saved</p>`;
+  const hl={},all=pz(),cs=['all',...new Set(all.map(causeOf))];hlMoves(ZG,zsel,hl);
+  const chips=cs.map(c=>`<button class="${c===zf?'':'alt'}" onclick="zf='${c}';Z=null;puzNext()">${c==='all'?'All':c} (${c==='all'?all.length:all.filter(p=>causeOf(p)===c).length})</button>`).join('');
+  $('puz').innerHTML=`<div class="chips">${chips}</div>`+board(ZG.fen(),hl,zres===2?[Z.bu.slice(0,2),Z.bu.slice(2,4)]:null,Z.c==='b')+`<div id="cap">${zmsg}</div><div class="ctl"><button onclick="puzNext()">Next puzzle</button></div><p>Solved ${zs.ok} of ${zs.n} this session</p>`;
 }
 function zClick(q){
   if(zres)return;
   if(zsel){const m=ZG.move({from:zsel,to:q,promotion:'q'});
     if(m){zs.n++;const u=m.from+m.to+(m.promotion||'');
-      if(u===Z.bu){zs.ok++;zres=1;zmsg=`✅ Correct! ${Z.san}`}
-      else{ZG.undo();zres=2;zmsg=`❌ Not quite. Best was <b>${Z.san}</b> (green arrow).`}
+      if(u===Z.bu){zs.ok++;zres=1;mark(1);zmsg=`✅ Correct! ${Z.san}. ${tip(causeOf(Z))}`}
+      else{ZG.undo();zres=2;mark(0);zmsg=`❌ Not quite. Best was <b>${Z.san}</b> (green arrow). ${tip(causeOf(Z))}`}
       zsel=null;return drawZ()}}
   const p=ZG.get(q);zsel=p&&p.color===Z.c?q:null;drawZ();
 }
 
-boot();
+const probe=new Image();probe.onload=probe.onerror=()=>{useImg=probe.complete&&probe.naturalWidth>0;boot()};probe.src='pieces/wP.svg';
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script></body></html>
