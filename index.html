@@ -173,8 +173,8 @@ function board(fen,hl,ar,flip,badge){
     h+=`<div class="sq ${(r+c)%2?'d':'l'}" data-q="${q}"${col?` style="background:${col}"`:''}>${p?(useImg?`<img class="pc" alt="" draggable="false" src="pieces/${p.color}${p.type.toUpperCase()}.svg">`:`<svg class="pc ${p.color}" viewBox="0 0 100 100"><use href="#p-${p.type}"/></svg>`):''}${c===0?`<i class="cr">${8-rr}</i>`:''}${r===7?`<i class="cf">${String.fromCharCode(97+cc)}</i>`:''}${badge&&badge.q===q?`<i class="bdg" style="background:${badge.c}">${badge.t}</i>`:''}</div>`;
   }
   let a='';
-  if(ar){const [x1,y1]=xy(ar[0],flip),[x2,y2]=xy(ar[1],flip);
-    a=`<svg viewBox="0 0 8 8"><defs><marker id="ah" markerWidth="4" markerHeight="4" refX="2" refY="2" orient="auto"><path d="M0,0L4,2L0,4z" fill="#4fbf6a"/></marker></defs><line x1="${x1+.5}" y1="${y1+.5}" x2="${x2+.5}" y2="${y2+.5}" stroke="#4fbf6a" stroke-width=".18" opacity=".9" marker-end="url(#ah)"/></svg>`}
+  if(ar){const col=ar[2]||'#4fbf6a',mid='ah'+col.slice(1),[x1,y1]=xy(ar[0],flip),[x2,y2]=xy(ar[1],flip);
+    a=`<svg viewBox="0 0 8 8"><defs><marker id="${mid}" markerWidth="4" markerHeight="4" refX="2" refY="2" orient="auto"><path d="M0,0L4,2L0,4z" fill="${col}"/></marker></defs><line x1="${x1+.5}" y1="${y1+.5}" x2="${x2+.5}" y2="${y2+.5}" stroke="${col}" stroke-width=".2" opacity=".9" marker-end="url(#${mid})"/></svg>`}
   return `<div class="bd">${h}${a}</div>`;
 }
 const hlMoves=(g,s,hl)=>{if(s){hl[s]='rgba(217,164,65,.6)';g.moves({square:s,verbose:true}).forEach(m=>hl[m.to]='rgba(217,164,65,.35)')}};
@@ -398,6 +398,54 @@ function lineDraw(host){
 }
 function lstep(h,d){const L=LINES[h];clearInterval(L.t);L.j=Math.max(0,Math.min(L.sans.length,L.j+d));lineDraw(h)}
 function lauto(h){const L=LINES[h];clearInterval(L.t);if(L.j>=L.sans.length)L.j=0;L.t=setInterval(()=>{if(L.j>=L.sans.length){clearInterval(L.t);return}L.j++;lineDraw(h)},1200);lineDraw(h)}
+/* ---- positional reasons ---- */
+const swapTurn=(f,t)=>{const p=f.split(' ');p[1]=t;p[3]='-';return p.join(' ')};
+function capsFor(f,side){let g;try{g=new Chess(swapTurn(f,side))}catch(e){return []}return g.moves({verbose:true}).filter(m=>m.captured)}
+function threatsFor(f,side){
+  const out=[];
+  for(const m of capsFor(f,side)){
+    if(!V[m.captured])continue;
+    const g=new Chess(swapTurn(f,side));g.move({from:m.from,to:m.to,promotion:m.promotion||undefined});
+    const recap=g.moves({verbose:true}).some(x=>x.to===m.to&&x.captured);
+    if(V[m.captured]>V[m.piece]||!recap)out.push({from:m.from,to:m.to,att:m.piece,cap:m.captured,undef:!recap});
+  }
+  return out.sort((a,b)=>V[b.cap]-V[a.cap]);
+}
+function reasons(f,u){
+  const out={t:[],blue:[],orange:[]},mover=f.split(' ')[1],opp=mover==='w'?'b':'w';
+  const g0=new Chess(f),g=new Chess(f),m=g.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});if(!m)return out;
+  const f2=g.fen(),nm=q=>NAME[(g0.get(q)||{}).type]||'piece';
+  if(g.in_checkmate())out.t.push('It checkmates the king.');else if(g.in_check())out.t.push('It gives check, so the opponent must answer it.');
+  const bt=threatsFor(f,opp),at=threatsFor(f2,opp);
+  bt.slice(0,2).forEach(b=>{
+    if(m.to===b.from){out.t.push(`It captures the piece that was attacking your ${nm(b.to)} on ${b.to}.`);out.blue.push(b.to);return}
+    if(m.from===b.to){out.t.push(`It moves your ${nm(b.to)} out of danger.`);out.blue.push(m.to);return}
+    if(at.some(a=>a.to===b.to&&a.from===b.from))return;
+    const still=capsFor(f2,opp).some(c=>c.to===b.to&&c.from===b.from);
+    out.t.push(still?`It defends your ${nm(b.to)} on ${b.to}, so capturing it would lose material.`:`It blocks the attack on your ${nm(b.to)} on ${b.to}.`);out.blue.push(b.to);
+  });
+  if(m.captured){const rec=capsFor(f2,opp).some(c=>c.to===m.to);out.t.push(`It captures a ${NAME[m.captured]}${rec?', and the pieces can be exchanged':', and your piece cannot be recaptured'}.`)}
+  const mb=threatsFor(f,mover).map(x=>x.from+x.to),nt=threatsFor(f2,mover).filter(x=>!mb.includes(x.from+x.to));
+  const tg=[...new Set(nt.filter(x=>V[x.cap]>=3).map(x=>x.to))];
+  if(tg.length>=2){out.t.push(`It attacks ${tg.length} of their pieces at once (a fork).`);out.orange.push(...tg)}
+  else if(nt.length){const x=nt[0];out.t.push(`It attacks their ${NAME[x.cap]} on ${x.to}${x.undef?', which is not defended':''}.`);out.orange.push(x.to)}
+  if(/[kq]/.test(m.flags))out.t.push('It castles, tucking the king away and connecting the rooks.');
+  else if((m.piece==='n'||m.piece==='b')&&m.from[1]===(mover==='w'?'1':'8'))out.t.push(`It develops your ${NAME[m.piece]} so it can join the game.`);
+  else if(m.piece==='p'&&'de'.includes(m.to[0])&&'45'.includes(m.to[1]))out.t.push('It claims space in the center.');
+  else if(m.piece==='r'){const ix=m.to.charCodeAt(0)-97;if(!g.board().some(row=>row[ix]&&row[ix].type==='p'))out.t.push('It puts your rook on an open file.')}
+  const m1=new Chess(swapTurn(f,mover)).moves().length,m2=new Chess(swapTurn(f2,mover)).moves().length;
+  if(out.t.length<2&&m2>=m1+4)out.t.push(`It gives your pieces more room (${m1} → ${m2} possible moves).`);
+  if(!out.t.length)out.t.push('It keeps your pieces safe and gives the opponent nothing to attack.');
+  out.t=out.t.slice(0,3);return out;
+}
+function failReasons(f,u){
+  const out=[],mover=f.split(' ')[1],opp=mover==='w'?'b':'w',g=new Chess(f),m=g.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});if(!m)return out;
+  const at=threatsFor(g.fen(),opp),bt=threatsFor(f,opp),nm=q=>NAME[(g.get(q)||{}).type]||'piece';
+  at.slice(0,2).forEach(a=>{const old=bt.some(b=>b.to===a.to&&b.from===a.from);
+    if(a.to===m.to)out.push(`The ${nm(a.to)} you moved can be captured${a.undef?' and nothing protects it':' by a cheaper piece'}.`);
+    else out.push(old?`The attack on your ${nm(a.to)} on ${a.to} was already there and this move does not stop it.`:`It leaves your ${nm(a.to)} on ${a.to} ${a.undef?'undefended and ':''}open to capture.`)});
+  return out;
+}
 async function explain(f,played,best){
   await engine();
   const b=await run(f,`go depth 12 searchmoves ${best}`),bl=[best,...(b.pv||[]).slice(1,5)];
@@ -406,16 +454,16 @@ async function explain(f,played,best){
     const g=new Chess(f),m=g.move({from:played.slice(0,2),to:played.slice(2,4),promotion:played[4]});
     if(m&&!g.game_over()){const r=await run(g.fen(),'go depth 12');pl=[played,...(r.pv||[]).slice(0,4)];pcp=-r.cp}
   }
-  return {bl,bcp:b.cp,pl,pcp};
+  return {bl,bcp:b.cp,pl,pcp,rs:reasons(f,best),fr:pl?failReasons(f,played):null};
 }
 function explainHtml(f,x,cause){
   const B=lineInfo(f,x.bl),b1=B.mvs[0];if(!b1)return '';
-  const why=b1.captured?`captures a ${NAME[b1.captured]}`:/#/.test(b1.san)?'delivers checkmate':/\+/.test(b1.san)?'gives check and forces a reply':/[kq]/.test(b1.flags)?'castles to keep the king safe':b1.promotion?'promotes a pawn':'improves the position without leaving anything undefended';
+  const li=a=>a&&a.length?`<ul style="margin:6px 0 6px 18px;padding:0">${a.map(r=>`<li>${r}</li>`).join('')}</ul>`:'<br>';
   const d=matDelta(f,B.fens[B.fens.length-1]);
-  let h=`<div class="wk" style="cursor:default"><b>Why ${b1.san} is better</b><br>It ${why}. A likely continuation is ${fmtLine(f,B.sans)}. ${d>0?`The side to move ends up about ${d} point${d>1?'s':''} of material ahead.`:d<0?`It may cost ${-d} point${-d>1?'s':''} of material, but it is still the best option.`:'Material stays even.'} <small>Engine: ${fmt(x.bcp)}.</small></div>`;
+  let h=`<div class="wk" style="cursor:default"><b>Why ${b1.san} is better</b>${li(x.rs&&x.rs.t)}A likely continuation is ${fmtLine(f,B.sans)}. ${d>0?`The side to move ends up about ${d} point${d>1?'s':''} of material ahead.`:d<0?`It may cost ${-d} point${-d>1?'s':''} of material, but it is still the best option.`:'Material stays even.'} <small>Engine: ${fmt(x.bcp)}.</small></div>`;
   if(x.pl){
     const P=lineInfo(f,x.pl),r1=P.mvs[1],dp=matDelta(f,P.fens[P.fens.length-1]);
-    h=`<div class="wk" style="cursor:default"><b>Why ${P.sans[0]} fails</b><br>${r1?`The reply is ${r1.san}${r1.captured?`, capturing a ${NAME[r1.captured]}`:/#/.test(r1.san)?', which is checkmate':/\+/.test(r1.san)?', giving check':''}. `:''}${dp<0?`Over the next moves about ${-dp} point${-dp>1?'s':''} of material is lost. `:'Material may stay level, but the position gets clearly worse. '}${cause?tip(cause)+' ':''}<small>Engine: ${fmt(x.pcp)} after ${P.sans[0]} vs ${fmt(x.bcp)} with ${b1.san}.</small></div>`+h;
+    h=`<div class="wk" style="cursor:default"><b>Why ${P.sans[0]} fails</b>${li(x.fr)}${r1?`The reply is ${r1.san}${r1.captured?`, capturing a ${NAME[r1.captured]}`:/#/.test(r1.san)?', which is checkmate':/\+/.test(r1.san)?', giving check':''}. `:''}${dp<0?`Over the next moves about ${-dp} point${-dp>1?'s':''} of material is lost. `:'Material may stay level, but the position gets clearly worse. '}${cause?tip(cause)+' ':''}<small>Engine: ${fmt(x.pcp)} after ${P.sans[0]} vs ${fmt(x.bcp)} with ${b1.san}.</small></div>`+h;
   }
   return h;
 }
@@ -515,7 +563,7 @@ function resign(){if(!busy&&!pOver){pOver=true;coachMsg='You resigned. Start a n
 function endGame(){pMode='home';P=null;pOver=false;drillZ=null;tabClick=null;homeUI()}
 
 /* ---------- puzzles ---------- */
-let Z=null,ZG=null,zsel=null,zres=0,zmsg='',zs={ok:0,n:0},zf='all',zfr=null,zi=0,zt=null,zex='';
+let Z=null,ZG=null,zsel=null,zres=0,zmsg='',zs={ok:0,n:0},zf='all',zfr=null,zi=0,zt=null,zex='',zSpd=+localStorage.getItem('ccspd')||3500;
 function trainP(c){zf=c;Z=null;go('puz')}
 function mark(ok){const all=pz(),p=all.find(x=>x.fen===Z.fen&&x.bu===Z.bu);if(p){p.ok=ok?(p.ok||0)+1:0;localStorage.setItem('pz_'+user,JSON.stringify(all))}}
 function puzNext(first){
@@ -526,16 +574,27 @@ function puzNext(first){
     Z=b[Math.floor(Math.random()*b.length)];ZG=new Chess(Z.fen);zsel=null;zres=0;zmsg=`You are ${Z.c==='w'?'White':'Black'}. Find the best move.`}
   tabClick=zClick;drawZ();
 }
-const moveNote=m=>m.captured?`captures a ${NAME[m.captured]}`:/#/.test(m.san)?'checkmate!':/\+/.test(m.san)?'check':/[kq]/.test(m.flags)?'castles':m.promotion?'promotes':'';
+const moveNote=(m,who)=>m.captured?`captures ${who==='You'?'their':'your'} ${NAME[m.captured]}`:/#/.test(m.san)?'checkmate!':/\+/.test(m.san)?'gives check':/[kq]/.test(m.flags)?'castles':m.promotion?'promotes a pawn':'';
 function buildFrames(f,x){
-  const F=[],add=(ucis,title,tint)=>{const L=lineInfo(f,ucis);F.push({fen:f,hl:{},cap:`<b>${title}</b>`});
-    L.mvs.forEach((m,k)=>{const who=m.color===Z.c?'You':'Opponent',n=moveNote(m);F.push({fen:L.fens[k+1],hl:{[m.from]:tint,[m.to]:tint},cap:`<b>${title}</b><br>${who}: <b>${m.san}</b>${n?' · '+n:''}`})})};
-  if(x.pl)add(x.pl,'❌ What happens after your move','rgba(224,100,90,.6)');
-  add(x.bl,x.pl?'✅ The better line':'✅ Why this move works','rgba(79,191,106,.55)');
+  const F=[],add=(ucis,title,tint,col,better)=>{const L=lineInfo(f,ucis);F.push({fen:f,hl:{},cap:`<b>${title}</b><br>Starting position. Press ▶ or › to watch.`,title:1});
+    L.mvs.forEach((m,k)=>{const who=m.color===Z.c?'You':'Opponent',n=moveNote(m,who),h={[m.from]:tint,[m.to]:tint};let extra='';
+      if(k===0&&better&&x.rs){x.rs.blue.forEach(q=>h[q]='rgba(66,135,245,.55)');x.rs.orange.forEach(q=>h[q]='rgba(245,158,66,.6)');
+        extra=`<br><small>${x.rs.t.slice(0,2).join(' ')}${x.rs.blue.length||x.rs.orange.length?' (blue: piece being protected, orange: piece being attacked)':''}</small>`}
+      if(k===0&&!better&&x.fr&&x.fr.length)extra=`<br><small>${x.fr[0]}</small>`;
+      F.push({fen:L.fens[k+1],hl:h,ar:[m.from,m.to,col],note:!!n||!!extra,cap:`<b>${title}</b><br>${who}: <b>${m.san}</b>${n?' · '+n:''}${extra}`})})};
+  if(x.pl)add(x.pl,'❌ What happens after your move','rgba(224,100,90,.6)','#e0645a',false);
+  add(x.bl,x.pl?'✅ The better line':'✅ Why this move works','rgba(79,191,106,.55)','#4fbf6a',true);
   return F;
 }
-function zStop(){clearInterval(zt);zt=null}
-function zplay(){if(zt){zStop();return drawZ()}if(zi>=zfr.length-1)zi=0;zt=setInterval(()=>{if(zi>=zfr.length-1)zStop();else zi++;drawZ()},1400);drawZ()}
+const zdel=f=>zSpd+(f.note?900:0)+(f.title?1200:0);
+function zStop(){clearTimeout(zt);zt=null}
+function zplay(){
+  if(zt){zStop();return drawZ()}
+  if(zi>=zfr.length-1)zi=0;drawZ();
+  const tick=()=>{if(zi>=zfr.length-1){zt=null;drawZ();return}zi++;drawZ();zt=setTimeout(tick,zdel(zfr[zi]))};
+  zt=setTimeout(tick,zdel(zfr[zi]));
+}
+function zspd(v){zSpd=+v;localStorage.setItem('ccspd',v)}
 function zstep(d){zStop();zi=Math.max(0,Math.min(zfr.length-1,zi+d));drawZ()}
 async function zExplain(u){
   const tok=++exTok;zex='<p>Preparing the replay…</p>';drawZ();
@@ -546,8 +605,8 @@ async function zExplain(u){
 function drawZ(){
   const hl={},all=pz(),cs=['all',...new Set(all.map(causeOf))],fr=zfr&&zfr[zi];hlMoves(ZG,zsel,hl);
   const chips=cs.map(c=>`<button class="${c===zf?'':'alt'}" onclick="zf='${c}';Z=null;puzNext()">${c==='all'?'All':c} (${c==='all'?all.length:all.filter(p=>causeOf(p)===c).length})</button>`).join('');
-  $('puz').innerHTML=`<div class="chips">${chips}</div>`+board(fr?fr.fen:ZG.fen(),fr?fr.hl:hl,!fr&&zres===2?[Z.bu.slice(0,2),Z.bu.slice(2,4)]:null,Z.c==='b')+`<div id="cap">${fr?fr.cap:zmsg}</div>`+
-  (zfr?`<div class="ctl"><button class="alt" onclick="zstep(-1)">‹</button><button class="alt" onclick="zplay()">${zt?'⏸ Pause':'▶ Replay'}</button><button class="alt" onclick="zstep(1)">›</button></div>`:'')+
+  $('puz').innerHTML=`<div class="chips">${chips}</div>`+board(fr?fr.fen:ZG.fen(),fr?fr.hl:hl,fr?fr.ar:(zres===2?[Z.bu.slice(0,2),Z.bu.slice(2,4)]:null),Z.c==='b')+`<div id="cap">${fr?fr.cap:zmsg}</div>`+
+  (zfr?`<div class="ctl"><button class="alt" onclick="zstep(-1)">‹</button><button class="alt" onclick="zplay()">${zt?'⏸ Pause':'▶ Replay'}</button><button class="alt" onclick="zstep(1)">›</button><select onchange="zspd(this.value)" style="flex:1.3"><option value="5500" ${zSpd===5500?'selected':''}>Slow</option><option value="3500" ${zSpd===3500?'selected':''}>Normal</option><option value="2000" ${zSpd===2000?'selected':''}>Fast</option></select></div>`:'')+
   `<div class="ctl"><button onclick="puzNext()">Next puzzle</button></div><div id="exZ">${zex}</div><p>Solved ${zs.ok} of ${zs.n} this session</p>`;
 }
 function zClick(q){
