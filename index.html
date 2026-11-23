@@ -19,7 +19,7 @@ a{color:var(--gold)}
 #top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 #chip{color:var(--dim);font-size:14px}
 form{display:flex;gap:8px}
-input,select{flex:1;min-width:0;padding:11px;border-radius:10px;border:1px solid #3a4f45;background:var(--panel);color:var(--ink);font-size:16px}
+input,select,textarea{flex:1;min-width:0;padding:11px;border-radius:10px;border:1px solid #3a4f45;background:var(--panel);color:var(--ink);font-size:16px}
 button{padding:11px 14px;border:0;border-radius:10px;background:var(--gold);color:#fff;font-weight:700;font-size:15px}
 button:disabled{opacity:.5}
 #tabs{display:flex;gap:6px;margin:12px 0}
@@ -70,6 +70,13 @@ button{min-height:44px}
 details{margin-top:22px}summary{background:var(--panel);padding:14px;border-radius:10px;cursor:pointer;font-weight:600}
 .wk{cursor:pointer}
 a.btn{display:flex;align-items:center;justify-content:center;flex:1;padding:10px 8px;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;min-height:44px;text-align:center}
+.bdg{position:absolute;top:2px;right:2px;min-width:22px;height:22px;border-radius:11px;color:#fff;font:800 12px/22px -apple-system,sans-serif;text-align:center;font-style:normal;z-index:3;box-shadow:0 1px 3px #0008}
+.mvl{display:flex;flex-wrap:wrap;gap:4px;margin-top:14px;font-size:15px}
+.mvb{padding:5px 7px;border-radius:6px;background:var(--panel);cursor:pointer}.mvb.cur{background:var(--gold);color:#fff}
+.mn{color:var(--dim);padding:5px 2px}
+#f{flex-direction:column}
+#addsrc:not([hidden]){display:flex;flex-direction:column;gap:8px;margin-top:10px;background:var(--panel);padding:12px;border-radius:10px}
+textarea{min-height:90px;font-size:14px}
 </style></head><body><svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <symbol id="p-p" viewBox="0 0 100 100"><g fill="var(--pf)" stroke="var(--ps)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><path d="M41 49C43 60 40 70 30 80H70C60 70 57 60 59 49Z"/><ellipse cx="50" cy="47" rx="14" ry="5"/><circle cx="50" cy="31" r="13"/><rect x="27" y="78" width="46" height="10" rx="4"/></g></symbol>
 <symbol id="p-r" viewBox="0 0 100 100"><g fill="var(--pf)" stroke="var(--ps)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"><path d="M28 87V79L35 72V44L29 38V20H41V28H46V20H54V28H59V20H71V38L65 44V72L72 79V87Z"/><path d="M35 44H65M35 72H65" fill="none"/></g></symbol>
@@ -80,17 +87,27 @@ a.btn{display:flex;align-items:center;justify-content:center;flex:1;padding:10px
 </defs></svg>
 <main>
 <div id="top"><h1>Chess Coach</h1><div id="chip"></div></div>
-<div id="setup" hidden><p>Enter your chess.com username once. It's saved on this device only.</p>
-<form id="f"><input id="u" placeholder="chess.com username" autocapitalize="none" autocorrect="off"><button>Save</button></form></div>
+<div id="setup" hidden><p>Enter your username for each site you use and leave the others empty. You can change these any time. They are saved on this device only.</p>
+<form id="f"><input id="u" placeholder="chess.com username" autocapitalize="none" autocorrect="off"><input id="li" placeholder="Lichess username (optional)" autocapitalize="none" autocorrect="off"><button>Save</button></form>
+<button type="button" class="alt" style="margin-top:10px;width:100%" onclick="$('addsrc').hidden=!$('addsrc').hidden">＋ Add data source</button>
+<div id="addsrc" hidden>
+<input id="as_name" placeholder="Name (e.g. My club, Tournament games)">
+<select id="as_type" onchange="$('as_url').hidden=this.value!=='url';$('as_pgn').hidden=this.value!=='pgn'"><option value="url">PGN link (put {username} in the address)</option><option value="pgn">PGN file or pasted text</option></select>
+<input id="as_url" placeholder="https://example.com/games/{username}.pgn">
+<div id="as_pgn" hidden><input type="file" id="as_file" accept=".pgn,.txt"><textarea id="as_txt" placeholder="...or paste PGN text here"></textarea></div>
+<p style="margin:0;font-size:13px">Link sources only work if the site allows browser access. A PGN file always works. After adding, enter your username (or your name exactly as it appears in the PGN) and press Save.</p>
+<button type="button" onclick="addSrc()">Add source</button>
+</div></div>
 <div id="app" hidden>
 <nav id="tabs"><button data-t="review">Review Games</button><button data-t="play">Play</button><button data-t="puz">Puzzles</button></nav>
 <div id="msg"></div>
 <section id="review">
 <h2 style="margin-top:8px">Review</h2>
+<div class="ctl"><select id="sf"></select></div>
 <div class="ctl"><select id="bn" style="flex:2"><option value="g10">Last 10 games</option><option value="g20">Last 20 games</option><option value="l10">Last 10 losses</option><option value="l20">Last 20 losses</option></select><button onclick="batch()">Analyze</button><button class="alt" style="flex:0 0 70px" onclick="stopBatch=true">Stop</button></div>
 <p>Keep the screen on while it runs. Each game takes a minute or two.</p>
 <div id="stats"></div><div id="rv"></div>
-<details id="gl"><summary>All games: open the list to review one</summary><select id="mo" style="width:100%;margin-top:10px"></select><div id="games" style="margin-top:10px"></div></details>
+<details id="gl"><summary>All games: open the list to review one</summary><div id="games" style="margin-top:10px"></div></details>
 </section>
 <section id="play" hidden></section>
 <section id="puz" hidden></section>
@@ -100,22 +117,28 @@ a.btn{display:flex;align-items:center;justify-content:center;flex:1;padding:10px
 const $=id=>document.getElementById(id),V={p:1,n:3,b:3,r:5,q:9,k:0};
 const LBL={blunder:['Blunder','var(--red)'],mistake:['Mistake','var(--org)'],inacc:['Inaccuracy','var(--yel)']};
 const GL={k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
-let useImg=false,user=localStorage.getItem('ccuser')||'',tabClick=null,sf,resolver,last=0,skill=20,gamesList=[];
+let useImg=false,user='',tabClick=null,sf,resolver,last=0,skill=20,gamesList=[];
 const st=()=>JSON.parse(localStorage.getItem('cc_'+user)||'{"done":[],"moves":0,"n":{},"cause":{},"phase":{}}');
 const pz=()=>JSON.parse(localStorage.getItem('pz_'+user)||'[]');
 const say=t=>$('msg').textContent=t;
 
 /* ---------- profile ---------- */
 function boot(){
+  user=active().map(k=>ACC[k])[0]||'';
   $('setup').hidden=!!user;$('app').hidden=!user;
-  $('chip').innerHTML=user?`${user} · <a href="#" onclick="chg();return false">change</a>`:'';
-  if(user){go('review');loadMonths()}
+  renderSetup();
+  $('sf').innerHTML='<option value="all">Analyze from: All sources</option>'+active().map(k=>`<option value="${k}">Analyze from: ${SOURCES[k].label} (${ACC[k]})</option>`).join('');
+  if(srcSel!=='all'&&!active().includes(srcSel))srcSel='all';$('sf').value=srcSel;
+  $('chip').innerHTML=user?`${active().map(k=>SOURCES[k].label+': '+ACC[k]).join(' · ')} · <a href="#" onclick="chg();return false">change</a>`:'';
+  if(user){go('review');loadGames()}
 }
-function chg(){user='';localStorage.removeItem('ccuser');$('games').innerHTML=$('rv').innerHTML=$('stats').innerHTML='';boot()}
-$('f').onsubmit=e=>{e.preventDefault();const v=$('u').value.trim().toLowerCase();if(v){user=v;localStorage.setItem('ccuser',v);boot()}};
+function chg(){$('setup').hidden=false;$('app').hidden=true}
+$('f').onsubmit=e=>{e.preventDefault();const n={};document.querySelectorAll('#f input').forEach(i=>n[i.dataset.k]=i.value.trim().toLowerCase());
+  if(!Object.values(n).some(Boolean))return;ACC=n;localStorage.setItem('ccacct',JSON.stringify(n));boot()};
+$('sf').onchange=()=>{srcSel=$('sf').value;localStorage.setItem('ccsrc',srcSel);loadGames()};
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>go(b.dataset.t));
 function go(t){
-  tabClick=null;say('');
+  tabClick=null;say('');stopPlay();zStop();
   ['review','play','puz'].forEach(x=>$(x).hidden=x!==t);
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
   if(t==='play')playUI();if(t==='puz')puzNext(true);
@@ -123,27 +146,31 @@ function go(t){
 document.addEventListener('click',e=>{const s=e.target.closest('.sq');if(s&&tabClick)tabClick(s.dataset.q)});
 
 /* ---------- engine ---------- */
+let chain=Promise.resolve(),lastPv=[];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function engine(){
   if(sf)return;
   const src=await (await fetch('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js')).text();
   sf=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));
   sf.onmessage=e=>{const l=typeof e.data==='string'?e.data:'';
-    if(l.startsWith('info')&&l.includes(' score ')){const m=l.match(/score (cp|mate) (-?\d+)/);if(m)last=m[1]==='cp'?+m[2]:(m[2]>0?1e4-m[2]:-1e4-m[2]);}
-    else if(l.startsWith('bestmove')&&resolver)resolver({cp:last,best:l.split(' ')[1]});};
+    if(l.startsWith('info')&&l.includes(' score ')){const m=l.match(/score (cp|mate) (-?\d+)/);if(m)last=m[1]==='cp'?+m[2]:(m[2]>0?1e4-m[2]:-1e4-m[2]);const p=l.match(/ pv (.+)$/);if(p)lastPv=p[1].trim().split(' ')}
+    else if(l.startsWith('bestmove')&&resolver)resolver({cp:last,best:l.split(' ')[1],pv:lastPv});};
   sf.postMessage('uci');
 }
 const setSkill=n=>{if(n!==skill){sf.postMessage('setoption name Skill Level value '+n);skill=n}};
-const evalFen=fen=>new Promise(r=>{setSkill(20);resolver=r;last=0;sf.postMessage('position fen '+fen);sf.postMessage('go depth '+depth)});
-const engMove=(fen,l,ms=700)=>new Promise(r=>{setSkill(l);resolver=r;last=0;sf.postMessage('position fen '+fen);sf.postMessage('go movetime '+ms)});
+const enq=f=>{const p=chain.then(f);chain=p.catch(()=>{});return p};
+const run=(fen,cmd,sk=20)=>enq(()=>new Promise(r=>{setSkill(sk);resolver=r;last=0;lastPv=[];sf.postMessage('position fen '+fen);sf.postMessage(cmd)}));
+const evalFen=fen=>run(fen,'go depth '+depth);
+const engMove=(fen,l,ms=700)=>run(fen,'go movetime '+ms,l);
 const clip=x=>Math.max(-1000,Math.min(1000,x));
 
 /* ---------- board ---------- */
 function xy(q,f){const c=q.charCodeAt(0)-97,r=8-+q[1];return f?[7-c,7-r]:[c,r]}
-function board(fen,hl,ar,flip){
+function board(fen,hl,ar,flip,badge){
   const b=new Chess(fen).board();let h='';
   for(let r=0;r<8;r++)for(let c=0;c<8;c++){
     const rr=flip?7-r:r,cc=flip?7-c:c,p=b[rr][cc],q=String.fromCharCode(97+cc)+(8-rr),col=hl[q];
-    h+=`<div class="sq ${(r+c)%2?'d':'l'}" data-q="${q}"${col?` style="background:${col}"`:''}>${p?(useImg?`<img class="pc" alt="" draggable="false" src="pieces/${p.color}${p.type.toUpperCase()}.svg">`:`<svg class="pc ${p.color}" viewBox="0 0 100 100"><use href="#p-${p.type}"/></svg>`):''}${c===0?`<i class="cr">${8-rr}</i>`:''}${r===7?`<i class="cf">${String.fromCharCode(97+cc)}</i>`:''}</div>`;
+    h+=`<div class="sq ${(r+c)%2?'d':'l'}" data-q="${q}"${col?` style="background:${col}"`:''}>${p?(useImg?`<img class="pc" alt="" draggable="false" src="pieces/${p.color}${p.type.toUpperCase()}.svg">`:`<svg class="pc ${p.color}" viewBox="0 0 100 100"><use href="#p-${p.type}"/></svg>`):''}${c===0?`<i class="cr">${8-rr}</i>`:''}${r===7?`<i class="cf">${String.fromCharCode(97+cc)}</i>`:''}${badge&&badge.q===q?`<i class="bdg" style="background:${badge.c}">${badge.t}</i>`:''}</div>`;
   }
   let a='';
   if(ar){const [x1,y1]=xy(ar[0],flip),[x2,y2]=xy(ar[1],flip);
@@ -175,32 +202,84 @@ const YQ={'Left a piece hanging':'chess how to stop hanging pieces and blunderin
 [DEF]:'chess how to find the best move thinking process'};
 const yt=q=>'https://www.youtube.com/results?search_query='+encodeURIComponent(q),ytc=c=>yt(YQ[c]||YQ[DEF]);
 let depth=10,stopBatch=false,prog='',R=null;
-async function loadMonths(){
-  say('Loading games…');
-  try{
-    const a=await (await fetch(`https://api.chess.com/pub/player/${encodeURIComponent(user)}/games/archives`)).json();
-    const arch=(a.archives||[]).slice(-6).reverse();
-    if(!arch.length)return say('No games found for that username. Use "change" to fix it.');
-    $('mo').innerHTML=arch.map(u=>{const p=u.split('/');return `<option value="${u}">${p[p.length-2]}-${p[p.length-1]}</option>`}).join('');
-    loadGames();
-  }catch(e){say('Could not reach chess.com.')}
+/* To add a new game source later: add one entry here (label, placeholder, get). */
+const BUILTIN={
+ 'chess.com':{label:'Chess.com',ph:'chess.com username',get:async(name,cap)=>{
+  const a=await (await fetch(`https://api.chess.com/pub/player/${encodeURIComponent(name)}/games/archives`)).json(),out=[];
+  for(const u of (a.archives||[]).slice(-6).reverse()){
+    const g=await (await fetch(u)).json();
+    g.games.slice().reverse().forEach(x=>{if(!x.pgn||x.rules!=='chess')return;const w=x.white.username.toLowerCase()===name,me=w?x.white:x.black;
+      out.push({id:x.url,src:'chess.com',pgn:x.pgn,w:x.white.username,b:x.black.username,wr:x.white.rating,br:x.black.rating,me:w?'w':'b',res:me.result,loss:LOSS.includes(me.result),cls:x.time_class,ts:(x.end_time||0)*1000})});
+    if(out.length>=cap)break;
+  }
+  return out}},
+ 'lichess':{label:'Lichess',ph:'Lichess username',get:async(name,cap)=>{
+  const r=await fetch(`https://lichess.org/api/games/user/${encodeURIComponent(name)}?max=${cap}&pgnInJson=true&clocks=true&opening=true&finished=true`,{headers:{Accept:'application/x-ndjson'}});
+  if(!r.ok)throw new Error('Lichess user not found');
+  return (await r.text()).split('\n').filter(Boolean).map(l=>JSON.parse(l)).filter(g=>g.variant==='standard'&&g.pgn).map(g=>{
+    const W=g.players.white,B=g.players.black,wn=(W.user&&W.user.name)||'Anonymous',bn=(B.user&&B.user.name)||'Anonymous',w=wn.toLowerCase()===name;
+    const win=g.winner?((g.winner==='white')===w):null;
+    return {id:'https://lichess.org/'+g.id,src:'lichess',pgn:g.pgn,w:wn,b:bn,wr:W.rating,br:B.rating,me:w?'w':'b',res:win===null?'draw':win?'win':'lost',loss:win===false,cls:g.speed,ts:g.lastMoveAt||g.createdAt||0}})}}
+};
+let SOURCES={},CUSTOM=JSON.parse(localStorage.getItem('cccustom')||'[]'),lastErrs=[];
+const hash=t=>{let h=5381;for(let i=0;i<t.length;i++)h=((h<<5)+h+t.charCodeAt(i))>>>0;return h.toString(36)};
+function parsePgnGames(text,c,name){
+  return text.replace(/\r/g,'').split(/\n\s*\n(?=\[Event )/).map(p=>p.trim()).filter(p=>p.startsWith('[')&&/\n\s*1\./.test(p)).map(p=>{
+    const h={};for(const m of p.matchAll(/\[(\w+) "([^"]*)"\]/g))h[m[1]]=m[2];
+    const w=(h.White||'').toLowerCase()===name,bl=(h.Black||'').toLowerCase()===name;if(!w&&!bl)return null;
+    const r=h.Result,win=(r==='1-0'||r==='0-1')?((r==='1-0')===w):null;
+    const ts=Date.parse(((h.UTCDate||h.Date||'').replace(/\./g,'-'))+'T'+(h.UTCTime||'00:00:00')+'Z')||0;
+    return {id:c.id+':'+hash((h.Date||'')+(h.White||'')+(h.Black||'')+p.slice(-80)),src:c.label,pgn:p,w:h.White||'?',b:h.Black||'?',wr:h.WhiteElo||'?',br:h.BlackElo||'?',me:w?'w':'b',res:win===null?'draw':win?'win':'lost',loss:win===false,cls:h.TimeControl||'game',ts}}).filter(Boolean).sort((a,b)=>b.ts-a.ts);
 }
-$('mo').onchange=()=>loadGames();
+async function customGet(c,name,cap){
+  let text;
+  if(c.type==='pgn')text=localStorage.getItem('ccpgn_'+c.id)||'';
+  else{const r=await fetch(c.tpl.replace('{username}',encodeURIComponent(name)));if(!r.ok)throw new Error('HTTP '+r.status);text=await r.text()}
+  return parsePgnGames(text,c,name).slice(0,cap);
+}
+function rebuild(){SOURCES={...BUILTIN};CUSTOM.forEach(c=>SOURCES[c.id]={label:c.label,ph:c.type==='pgn'?c.label+': your name as in the PGN':c.label+': username',custom:true,get:(n,cap)=>customGet(c,n,cap)})}
+rebuild();
+function renderSetup(){
+  $('f').innerHTML=keys().map(k=>`<div style="display:flex;gap:6px"><input data-k="${k}" value="${ACC[k]||''}" placeholder="${SOURCES[k].ph}" autocapitalize="none" autocorrect="off">${SOURCES[k].custom?`<button type="button" class="alt" style="flex:0 0 44px" onclick="delSrc('${k}')">✕</button>`:''}</div>`).join('')+'<button>Save</button>';
+}
+function delSrc(k){
+  if(!confirm('Remove this data source?'))return;
+  CUSTOM=CUSTOM.filter(c=>c.id!==k);delete ACC[k];localStorage.removeItem('ccpgn_'+k);
+  localStorage.setItem('cccustom',JSON.stringify(CUSTOM));localStorage.setItem('ccacct',JSON.stringify(ACC));rebuild();renderSetup();
+}
+async function addSrc(){
+  const label=$('as_name').value.trim(),type=$('as_type').value;if(!label)return alert('Please give the source a name.');
+  const id='c'+Date.now().toString(36),c={id,label,type};
+  if(type==='url'){const u=$('as_url').value.trim();if(!/^https:\/\//.test(u))return alert('The link must start with https://');c.tpl=u}
+  else{
+    const f=$('as_file').files[0];let t=f?await f.text():$('as_txt').value;
+    if(!/\[Event /.test(t))return alert('That does not look like PGN text. It should contain lines like [Event "..."].');
+    try{localStorage.setItem('ccpgn_'+id,t.slice(0,3000000))}catch(e){return alert('That PGN is too large to store on this device.')}
+  }
+  CUSTOM.push(c);localStorage.setItem('cccustom',JSON.stringify(CUSTOM));rebuild();
+  ['as_name','as_url','as_txt'].forEach(i=>$(i).value='');$('as_file').value='';$('addsrc').hidden=true;renderSetup();
+}
+let ACC=JSON.parse(localStorage.getItem('ccacct')||'null')||{'chess.com':localStorage.getItem('ccuser')||'','lichess':localStorage.getItem('ccli')||''};
+let srcSel=localStorage.getItem('ccsrc')||'all';
+const keys=()=>Object.keys(SOURCES),active=()=>keys().filter(k=>ACC[k]);
+async function recentGames(cap){
+  const ks=(srcSel==='all'?active():[srcSel]).filter(k=>ACC[k]);
+  lastErrs=[];const res=await Promise.all(ks.map(k=>SOURCES[k].get(ACC[k],cap).catch(e=>{lastErrs.push(SOURCES[k].label+' ('+e.message+')');return []})));
+  return [].concat(...res).sort((x,y)=>y.ts-x.ts);
+}
 async function loadGames(){
   say('Loading games…');
   try{
-    const g=await (await fetch($('mo').value)).json(),done=st().done;
-    gamesList=g.games.filter(x=>x.pgn&&x.rules==='chess').reverse().slice(0,15);
-    $('games').innerHTML=gamesList.length?gamesList.map((x,i)=>{
-      const w=x.white.username.toLowerCase()===user,me=w?x.white:x.black,op=w?x.black:x.white;
-      return `<div class="row"><div>vs ${op.username} (${op.rating})<small>${w?'White':'Black'} · ${x.time_class} · ${me.result}</small></div><button onclick="run(${i},this)">${done.includes(x.url)?'✓ Review':'Review'}</button></div>`}).join(''):'<p>No standard games this month.</p>';
-    say('');show();
-  }catch(e){say('Could not load that month.')}
+    gamesList=(await recentGames(15)).slice(0,30);const done=st().done;
+    $('games').innerHTML=gamesList.length?gamesList.map((x,i)=>{const o=x.me==='w'?[x.b,x.br]:[x.w,x.wr];
+      return `<div class="row"><div>vs ${o[0]} (${o[1]})<small>${x.me==='w'?'White':'Black'} · ${x.cls} · ${x.res} · ${x.src}</small></div><button onclick="run_(${i},this)">${done.includes(x.id)?'✓ Review':'Review'}</button></div>`}).join(''):'<p>No games found. Check your usernames with "change" at the top.</p>';
+    say(lastErrs.length?'Problem loading: '+lastErrs.join('; ')+'. The site may block browser access.':'');show();
+  }catch(e){say('Could not load games.')}
 }
 async function recordGame(x){
-  const color=x.white.username.toLowerCase()===user?'w':'b',r=await analyze(x.pgn,color),s=st();
-  if(!s.done.includes(x.url)){
-    s.open=s.open||{};s.done.push(x.url);s.moves+=r.mine;const p=pz();
+  const color=x.me,r=await analyze(x.pgn,color),s=st();
+  if(!s.done.includes(x.id)){
+    s.open=s.open||{};s.done.push(x.id);s.moves+=r.mine;const p=pz();
     r.list.forEach(m=>{s.n[m.k]=(s.n[m.k]||0)+1;s.cause[m.cause]=(s.cause[m.cause]||0)+1;s.phase[m.phase]=(s.phase[m.phase]||0)+1;
       if(m.phase==='Opening'&&m.k!=='inacc'&&r.op)s.open[r.op]=(s.open[r.op]||0)+1;
       if(m.k!=='inacc')p.push({fen:r.fen[m.i],bu:m.bu,san:m.bestSan,c:color,cause:m.cause,ok:0})});
@@ -208,7 +287,7 @@ async function recordGame(x){
   }
   return r;
 }
-async function run(i,btn){
+async function run_(i,btn){
   btn.disabled=true;
   try{say('Starting engine…');await engine();depth=10;prog='';const r=await recordGame(gamesList[i]);renderReview(r,gamesList[i]);say('');show();btn.textContent='✓ Review'}
   catch(err){say('Review failed: '+err.message)}
@@ -218,15 +297,10 @@ async function batch(){
   const v=$('bn').value,n=+v.slice(1),lossOnly=v[0]==='l';stopBatch=false;
   try{
     say('Finding your recent games…');
-    const a=await (await fetch(`https://api.chess.com/pub/player/${encodeURIComponent(user)}/games/archives`)).json(),out=[];
-    for(const u of (a.archives||[]).slice(-6).reverse()){
-      const g=await (await fetch(u)).json();
-      g.games.slice().reverse().forEach(x=>{if(x.pgn&&x.rules==='chess'){const me=x.white.username.toLowerCase()===user?x.white:x.black;if(!lossOnly||LOSS.includes(me.result))out.push(x)}});
-      if(out.length>=n)break;
-    }
-    const todo=out.slice(0,n);if(!todo.length)return say('No matching games found.');
+    let all=await recentGames(lossOnly?60:n);if(lossOnly)all=all.filter(x=>x.loss);
+    const todo=all.slice(0,n);if(!todo.length)return say('No matching games found.');
     await engine();depth=8;
-    for(let k=0;k<todo.length&&!stopBatch;k++){prog=`Game ${k+1} of ${todo.length}: `;if(!st().done.includes(todo[k].url))await recordGame(todo[k]);show()}
+    for(let k=0;k<todo.length&&!stopBatch;k++){prog=`Game ${k+1} of ${todo.length}: `;if(!st().done.includes(todo[k].id))await recordGame(todo[k]);show()}
     say(stopBatch?'Stopped. Results so far are below.':`Done. Reviewed ${todo.length} games.`);
   }catch(e){say('Batch failed: '+e.message)}
   depth=10;prog='';
@@ -235,18 +309,19 @@ async function analyze(pgn,color){
   const g=new Chess();if(!g.load_pgn(pgn))throw new Error('could not read game');
   const mv=g.history({verbose:true}),c=new Chess(),ev=[],fen=[];
   const clk=[...pgn.matchAll(/\[%clk (\d+):(\d+):([\d.]+)\]/g)].map(m=>+m[1]*3600+ +m[2]*60+ +m[3]);
-  const em=pgn.match(/\[ECOUrl "([^"]+)"/),op=em?decodeURIComponent(em[1].split('/').pop()).split(/-\d/)[0].replace(/-/g,' '):'';
+  const em=pgn.match(/\[ECOUrl "([^"]+)"/),om=pgn.match(/\[Opening "([^"]+)"/);
+  const op=em?decodeURIComponent(em[1].split('/').pop()).split(/-\d/)[0].replace(/-/g,' '):om?om[1].split(':')[0]:'';
   for(let i=0;i<=mv.length;i++){
     say(`${prog}analyzing position ${i+1} of ${mv.length+1}…`);
     fen.push(c.fen());
     ev.push(c.game_over()?{cp:c.in_checkmate()?-1e4:0,best:null}:await evalFen(c.fen()));
     if(i<mv.length)c.move(mv[i]);
   }
-  const list=[];let mine=0;
+  const evw=ev.map((e,i)=>e.cp*(fen[i].split(' ')[1]==='w'?1:-1)),list=[],marks={};let mine=0;
   const after=(f,u)=>{if(!u)return null;const t=new Chess(f),m=t.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});return m?{m,t}:null};
   const forks=(t,q)=>{const f=t.fen().split(' ');f[1]=f[1]==='w'?'b':'w';f[3]='-';try{return new Set(new Chess(f.join(' ')).moves({square:q,verbose:true}).filter(x=>x.captured&&V[x.captured]>=3).map(x=>x.to)).size}catch(e){return 0}};
   mv.forEach((m,i)=>{
-    if(m.color!==color)return;mine++;
+    const isMine=m.color===color;if(isMine)mine++;
     const loss=Math.max(0,clip(ev[i].cp)-clip(-ev[i+1].cp));
     if(loss<50)return;
     const k=loss>=200?'blunder':loss>=100?'mistake':'inacc';
@@ -262,30 +337,98 @@ async function analyze(pgn,color){
     else if(b&&(/[+#]/.test(b.san)||b.captured)&&loss>=150)cause='Missed a tactic';
     else if(ev[i].cp>=300&&ev[i+1].cp>=200)cause='Let a winning position slip';
     else if(phase==='Opening'&&loss>=100)cause='Opening mistake';
-    list.push({i,bu:ev[i].best,n:Math.floor(i/2)+1,san:m.san,k,loss,phase,cause,bestSan:b?b.san:'—'});
+    const e={i,bu:ev[i].best,n:Math.floor(i/2)+1,san:m.san,k,loss,phase,cause,bestSan:b?b.san:'—',mine:isMine};
+    marks[i]=e;if(isMine)list.push(e);
   });
-  return {list,mine,fen,mv,color,op};
+  return {list,mine,fen,mv,color,op,marks,evw};
 }
+
+/* ---- review viewer ---- */
+const SYM={blunder:'??',mistake:'?',inacc:'?!'},BC={blunder:'#e0645a',mistake:'#e39a4a',inacc:'#cdbf5a'};
+const NAME={p:'pawn',n:'knight',b:'bishop',r:'rook',q:'queen'},MV={p:1,n:3,b:3,r:5,q:9};
+let ply=0,playTimer=null,exTok=0;
+function stopPlay(){clearInterval(playTimer);playTimer=null}
+function togglePlay(){
+  if(playTimer){stopPlay();return view(ply,'cur')}
+  if(ply>=R.mv.length)ply=0;
+  playTimer=setInterval(()=>{if(ply>=R.mv.length){stopPlay();view(ply,'cur')}else view(ply+1,'cur')},1300);view(ply,'cur');
+}
+function graph(i){
+  const {evw,marks}=R,n=Math.max(1,evw.length-1),X=k=>k*300/n,Y=v=>30-Math.max(-500,Math.min(500,v))/500*27;
+  const pts=evw.map((v,k)=>`${X(k).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+  const dots=Object.keys(marks).filter(k=>marks[k].mine).map(k=>`<circle cx="${X(+k+1).toFixed(1)}" cy="${Y(evw[+k+1]).toFixed(1)}" r="2.6" fill="${BC[marks[k].k]}"/>`).join('');
+  return `<svg viewBox="0 0 300 60" preserveAspectRatio="none" style="width:100%;height:70px;background:#1f1d1b;border-radius:8px;display:block" onclick="gclick(event)"><line x1="0" y1="30" x2="300" y2="30" stroke="#555" stroke-width=".5"/><polyline points="${pts}" fill="none" stroke="#81b64c" stroke-width="1.5"/>${dots}<line x1="${X(i)}" y1="0" x2="${X(i)}" y2="60" stroke="#fff" stroke-width=".8"/></svg>`;
+}
+function gclick(e){const r=e.currentTarget.getBoundingClientRect();view(Math.round((e.clientX-r.left)/r.width*(R.evw.length-1)),'cur')}
 function view(i,mode){
-  const {fen,mv,color,list}=R;i=Math.max(0,Math.min(mv.length,i));
-  const m=list.find(x=>x.i===i),last=i>0?mv[i-1]:null;
-  let f=fen[i],hl={},ar=null,cap=`Move ${Math.ceil(i/2)} of ${Math.ceil(mv.length/2)}`;
-  if(last&&mode==='cur')hl[last.from]=hl[last.to]='rgba(255,235,59,.5)';
-  if(m&&mode==='cur')cap=`<b>${LBL[m.k][0]}</b> coming up. What would you play here?`;
-  if(m&&mode==='played'){const p=mv[i];f=fen[i+1];hl[p.from]=hl[p.to]='rgba(224,100,90,.6)';cap=`You played <b>${m.san}</b>. ${m.cause}. ${tip(m.cause)} <a href="${ytc(m.cause)}" target="_blank" rel="noopener" style="color:var(--gold)">▶ Watch a lesson</a>`}
-  if(m&&mode==='better'){const u=m.bu,t=new Chess(fen[i]);t.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});f=t.fen();
-    hl[u.slice(0,2)]=hl[u.slice(2,4)]='rgba(79,191,106,.55)';ar=[u.slice(0,2),u.slice(2,4)];cap=`Better: <b>${m.bestSan}</b>`}
-  $('bv').innerHTML=board(f,hl,ar,color==='b')+`<div id="cap">${cap}</div>
-  <div class="ctl"><button class="alt" onclick="view(0,'cur')">⏮</button><button class="alt" onclick="view(${i-1},'cur')">◀</button><button class="alt" onclick="view(${i+1},'cur')">▶</button><button class="alt" onclick="view(${mv.length},'cur')">⏭</button></div>`+
-  (m?`<div class="ctl"><button class="alt" onclick="view(${i},'cur')">Before</button><button onclick="view(${i},'played')" style="background:var(--red)">My move</button><button onclick="view(${i},'better')">Better move</button></div>`:'');
+  exTok++;const {fen,mv,color,marks}=R;i=Math.max(0,Math.min(mv.length,i));ply=i;
+  const mk=i>0?marks[i-1]:null,last=i>0?mv[i-1]:null;
+  let f=fen[i],hl={},ar=null,badge=null,cap=i?`${Math.ceil(i/2)}${last.color==='w'?'.':'...'} <b>${last.san}</b>`:'Start of the game';
+  if(mode==='better'&&mk){f=fen[i-1];const u=mk.bu;hl[u.slice(0,2)]=hl[u.slice(2,4)]='rgba(79,191,106,.55)';ar=[u.slice(0,2),u.slice(2,4)];cap=`Better was <b>${mk.bestSan}</b> instead of ${last.san}.`}
+  else{
+    if(last)hl[last.from]=hl[last.to]='rgba(255,235,59,.5)';
+    if(mk){badge={q:last.to,t:SYM[mk.k],c:BC[mk.k]};cap=`<b>${last.san}${SYM[mk.k]}</b> ${mk.mine?'is a':'was a'} ${LBL[mk.k][0].toLowerCase()}${mk.mine?'':' by your opponent'}. Best was <b>${mk.bestSan}</b> (${(mk.loss/100).toFixed(1)} pawns).${mk.mine?' '+mk.cause+'.':''}`}
+  }
+  const mb=k=>`<a class="mvb ${k+1===i?'cur':''}" style="${marks[k]?`border-bottom:3px solid ${BC[marks[k].k]}`:''}" onclick="view(${k+1},'cur')">${mv[k].san}${marks[k]?SYM[marks[k].k]:''}</a>`;
+  let ml='';for(let k=0;k<mv.length;k+=2)ml+=`<span class="mn">${k/2+1}.</span>${mb(k)}${k+1<mv.length?mb(k+1):''}`;
+  $('bv').innerHTML=graph(i)+`<div style="margin-top:8px">`+board(f,hl,ar,color==='b',badge)+`</div><div id="cap">${cap}</div>`+
+  (mk?`<div class="ctl"><button class="alt" onclick="view(${i},'${mode==='better'?'cur':'better'}')">${mode==='better'?'Back to game':'Show best move'}</button><button onclick="explainR(${i})">Why?</button><a class="btn alt" href="${ytc(mk.mine?mk.cause:DEF)}" target="_blank" rel="noopener">▶ Lesson</a></div>`:'')+
+  `<div id="exR"></div><div class="ctl"><button class="alt" onclick="stopPlay();view(0,'cur')">⏮</button><button class="alt" onclick="stopPlay();view(${i-1},'cur')">‹</button><button class="alt" onclick="togglePlay()">${playTimer?'⏸':'▶'}</button><button class="alt" onclick="stopPlay();view(${i+1},'cur')">›</button><button class="alt" onclick="stopPlay();view(${mv.length},'cur')">⏭</button></div><div class="mvl">${ml}</div>`;
 }
+function explainR(i){const mk=R.marks[i-1],m=R.mv[i-1];stopPlay();showExplain('exR',R.fen[i-1],m.from+m.to+(m.promotion||''),mk.bu,R.color==='b',mk.mine?mk.cause:null)}
 function renderReview(r,x){
   R=r;
-  $('rv').innerHTML=`<h2>${x.white.username} vs ${x.black.username}</h2><div id="bv"></div><h2>Your mistakes (tap to see on board)</h2>`+
-  (r.list.length?r.list.map(m=>`<div class="mv" style="border-color:${LBL[m.k][1]}" onclick="view(${m.i},'cur');$('bv').scrollIntoView({behavior:'smooth'})"><b>Move ${m.n}: ${m.san}</b> — ${LBL[m.k][0]}<br>Better: <b>${m.bestSan}</b> · cost ${(m.loss/100).toFixed(1)} pawns<br><small>${m.cause} · ${m.phase}</small></div>`).join(''):'<p>No significant mistakes found. Clean game.</p>');
-  view(r.list.length?r.list[0].i:0,'cur');
+  $('rv').innerHTML=`<h2>${x.w} vs ${x.b}</h2><div id="bv"></div><h2>Your mistakes (tap to jump to the move)</h2>`+
+  (r.list.length?r.list.map(m=>`<div class="mv" style="border-color:${BC[m.k]}" onclick="view(${m.i+1},'cur');$('bv').scrollIntoView({behavior:'smooth'})"><b>Move ${m.n}: ${m.san}${SYM[m.k]}</b> — ${LBL[m.k][0]}<br>Better: <b>${m.bestSan}</b> · cost ${(m.loss/100).toFixed(1)} pawns<br><small>${m.cause} · ${m.phase}</small></div>`).join(''):'<p>No significant mistakes found. Clean game.</p>');
+  view(r.list.length?r.list[0].i+1:0,'cur');
   $('rv').scrollIntoView({behavior:'smooth'});
 }
+
+/* ---- explanations ---- */
+function lineInfo(f,ucis){const g=new Chess(f),fens=[f],sans=[],mvs=[];for(const u of ucis){const m=g.move({from:u.slice(0,2),to:u.slice(2,4),promotion:u[4]});if(!m)break;sans.push(m.san);mvs.push(m);fens.push(g.fen())}return {fens,sans,mvs}}
+function fmtLine(f,sans){const p=f.split(' ');let n=+p[5],w=p[1]==='w',o='';sans.forEach((s,k)=>{if(w)o+=n+'. ';else if(k===0)o+=n+'... ';o+=s+' ';if(!w)n++;w=!w});return o.trim()}
+function mat(fen,w){let t=0;for(const ch of fen.split(' ')[0]){const l=ch.toLowerCase();if(MV[l]&&((ch===ch.toUpperCase())===w))t+=MV[l]}return t}
+function matDelta(f,f2){const w=f.split(' ')[1]==='w';return (mat(f2,w)-mat(f2,!w))-(mat(f,w)-mat(f,!w))}
+const fmt=cp=>Math.abs(cp)>=9000?(cp>0?'mate for you':'mate against you'):(cp>=0?'+':'')+(cp/100).toFixed(1);
+const LINES={};
+function lineMake(host,f,ucis,flip,title){const L=lineInfo(f,ucis);LINES[host]={...L,f,flip,title,j:0};lineDraw(host)}
+function lineDraw(host){
+  const L=LINES[host],j=L.j,hl={};if(j>0){const m=L.mvs[j-1];hl[m.from]=hl[m.to]='rgba(255,235,59,.5)'}
+  $(host).innerHTML=`<div class="wk" style="cursor:default"><b>${L.title}</b><div style="max-width:340px;margin:8px auto 0">${board(L.fens[j],hl,null,L.flip)}</div><div class="ctl" style="align-items:center"><button class="alt" onclick="lstep('${host}',-1)">‹</button><button class="alt" onclick="lauto('${host}')">▶</button><span style="flex:3;text-align:center;font-size:14px">${j?fmtLine(L.f,L.sans.slice(0,j)):'Start position'}</span><button class="alt" onclick="lstep('${host}',1)">›</button></div></div>`;
+}
+function lstep(h,d){const L=LINES[h];clearInterval(L.t);L.j=Math.max(0,Math.min(L.sans.length,L.j+d));lineDraw(h)}
+function lauto(h){const L=LINES[h];clearInterval(L.t);if(L.j>=L.sans.length)L.j=0;L.t=setInterval(()=>{if(L.j>=L.sans.length){clearInterval(L.t);return}L.j++;lineDraw(h)},1200);lineDraw(h)}
+async function explain(f,played,best){
+  await engine();
+  const b=await run(f,`go depth 12 searchmoves ${best}`),bl=[best,...(b.pv||[]).slice(1,5)];
+  let pl=null,pcp=null;
+  if(played&&played!==best){
+    const g=new Chess(f),m=g.move({from:played.slice(0,2),to:played.slice(2,4),promotion:played[4]});
+    if(m&&!g.game_over()){const r=await run(g.fen(),'go depth 12');pl=[played,...(r.pv||[]).slice(0,4)];pcp=-r.cp}
+  }
+  return {bl,bcp:b.cp,pl,pcp};
+}
+function explainHtml(f,x,cause){
+  const B=lineInfo(f,x.bl),b1=B.mvs[0];if(!b1)return '';
+  const why=b1.captured?`captures a ${NAME[b1.captured]}`:/#/.test(b1.san)?'delivers checkmate':/\+/.test(b1.san)?'gives check and forces a reply':/[kq]/.test(b1.flags)?'castles to keep the king safe':b1.promotion?'promotes a pawn':'improves the position without leaving anything undefended';
+  const d=matDelta(f,B.fens[B.fens.length-1]);
+  let h=`<div class="wk" style="cursor:default"><b>Why ${b1.san} is better</b><br>It ${why}. A likely continuation is ${fmtLine(f,B.sans)}. ${d>0?`The side to move ends up about ${d} point${d>1?'s':''} of material ahead.`:d<0?`It may cost ${-d} point${-d>1?'s':''} of material, but it is still the best option.`:'Material stays even.'} <small>Engine: ${fmt(x.bcp)}.</small></div>`;
+  if(x.pl){
+    const P=lineInfo(f,x.pl),r1=P.mvs[1],dp=matDelta(f,P.fens[P.fens.length-1]);
+    h=`<div class="wk" style="cursor:default"><b>Why ${P.sans[0]} fails</b><br>${r1?`The reply is ${r1.san}${r1.captured?`, capturing a ${NAME[r1.captured]}`:/#/.test(r1.san)?', which is checkmate':/\+/.test(r1.san)?', giving check':''}. `:''}${dp<0?`Over the next moves about ${-dp} point${-dp>1?'s':''} of material is lost. `:'Material may stay level, but the position gets clearly worse. '}${cause?tip(cause)+' ':''}<small>Engine: ${fmt(x.pcp)} after ${P.sans[0]} vs ${fmt(x.bcp)} with ${b1.san}.</small></div>`+h;
+  }
+  return h;
+}
+async function showExplain(host,f,played,best,flip,cause){
+  const tok=++exTok,el=$(host);if(!el)return;el.innerHTML='<p>Analyzing the position…</p>';
+  try{
+    const x=await explain(f,played,best);if(tok!==exTok)return;
+    el.innerHTML=explainHtml(f,x,cause)+`<div id="${host}p"></div><div id="${host}a"></div>`;
+    if(x.pl)lineMake(host+'p',f,x.pl,flip,'What happens after your move');
+    lineMake(host+'a',f,x.bl,flip,'The better line');
+  }catch(e){if(tok===exTok)el.innerHTML='<p>Could not analyze this position: '+e.message+'</p>'}
+}
+
 function show(){
   const s=st();s.open=s.open||{};
   if(!s.done.length){$('stats').innerHTML='<p>No games reviewed yet. Choose how many games above and tap Analyze to find your top mistakes.</p>';return}
@@ -299,7 +442,7 @@ function show(){
 
 /* ---------- play ---------- */
 const LV=[['New to Chess',100,0],['Beginner',400,1],['Novice',600,3],['Intermediate',900,5],['Intermediate II',1200,8],['Advanced',1600,12],['Expert',2000,17]];
-let P=null,pc='w',psel=null,pLvl=LV[3],pPick='r',busy=false,pMode='setup',pOver=false,prevCp=0,coachMsg='',drillZ=null;
+let P=null,pc='w',psel=null,pLvl=LV[3],pPick='r',busy=false,pMode='setup',pOver=false,prevCp=0,coachMsg='',drillZ=null,retry=false;
 const coach=t=>`<div class="coach"><div class="av">♞</div><div class="bub">${t}</div></div>`;
 const back='<button class="alt" style="margin-bottom:6px" onclick="home(\'home\')">‹ Back</button>';
 function home(m){pMode=m;playUI()}
@@ -338,7 +481,7 @@ function drawP(){
   if(h.length){const l=h[h.length-1];hl[l.from]=hl[l.to]='rgba(255,235,59,.5)'}
   hlMoves(P,psel,hl);
   const st=pOver?'You resigned.':P.in_checkmate()?'Checkmate — '+(P.turn()===pc?'you lost.':'you won!'):P.game_over()?'Game drawn.':busy?'Coach is thinking…':'Your move'+(P.in_check()?' (you are in check)':'');
-  $('play').innerHTML=coach(coachMsg)+`<div class="pl">Coach · ${pLvl[0]} (${pLvl[1]})</div>`+board(P.fen(),hl,null,pc==='b')+`<div class="pl">You · ${st}</div>
+  $('play').innerHTML=coach(coachMsg)+(retry&&!busy&&!pOver?'<div class="ctl"><button onclick="undo()">↩ Take back my move and try again</button></div>':'')+`<div class="pl">Coach · ${pLvl[0]} (${pLvl[1]})</div>`+board(P.fen(),hl,null,pc==='b')+`<div class="pl">You · ${st}</div>
   <div class="ctl"><button class="alt" onclick="undo()">Undo</button><button class="alt" onclick="resign()">Resign</button><button onclick="endGame()">New game</button></div>`;
 }
 function pClick(q){
@@ -352,8 +495,8 @@ async function engReply(feedback,uci){
   busy=true;drawP();let fb='';
   try{
     await engine();
-    const r=await engMove(P.fen(),pLvl[2],300+pLvl[2]*40),u=r.best;
-    if(feedback){const loss=clip(r.cp)-clip(prevCp);
+    const t0=Date.now(),r=await engMove(P.fen(),pLvl[2],300+pLvl[2]*40),u=r.best;await sleep(Math.max(0,2500-(Date.now()-t0)));
+    retry=false;if(feedback){const loss=clip(r.cp)-clip(prevCp);retry=loss>=150;
       if(drillZ&&!drillZ.done){drillZ.done=1;
         fb=uci===drillZ.bu?'Exactly, that is the move you missed in your game! ':loss>=60?`In your real game this went wrong. The better move was ${drillZ.san}. ${tip(causeOf(drillZ))} `:`Fine move, though the engine preferred ${drillZ.san}. `}
       else fb=loss>=300?'Ouch, that was a blunder. Check what your last move left undefended. ':loss>=150?`That was a mistake (about ${(loss/100).toFixed(1)} pawns). `:loss>=60?'Slight inaccuracy, there was a better option. ':'Good move. '}
@@ -362,26 +505,50 @@ async function engReply(feedback,uci){
   }catch(e){coachMsg='Engine error: '+e.message}
   busy=false;drawP();
 }
-function undo(){if(!busy&&!pOver&&P.history().length>=2){P.undo();P.undo();psel=null;prevCp=0;coachMsg='Move taken back. Try again.';drawP()}}
+function undo(){
+  if(busy||pOver)return;const n=P.history().length;
+  if(n>=2&&P.turn()===pc){P.undo();P.undo()}else if(n>=1&&P.turn()!==pc){P.undo()}else return;
+  psel=null;prevCp=0;retry=false;if(drillZ&&!P.history().length)drillZ.done=0;
+  coachMsg='Move taken back. Take your time and try again.';drawP();
+}
 function resign(){if(!busy&&!pOver){pOver=true;coachMsg='You resigned. Start a new game when you are ready.';drawP()}}
 function endGame(){pMode='home';P=null;pOver=false;drillZ=null;tabClick=null;homeUI()}
 
 /* ---------- puzzles ---------- */
-let Z=null,ZG=null,zsel=null,zres=0,zmsg='',zs={ok:0,n:0},zf='all';
+let Z=null,ZG=null,zsel=null,zres=0,zmsg='',zs={ok:0,n:0},zf='all',zfr=null,zi=0,zt=null,zex='';
 function trainP(c){zf=c;Z=null;go('puz')}
 function mark(ok){const all=pz(),p=all.find(x=>x.fen===Z.fen&&x.bu===Z.bu);if(p){p.ok=ok?(p.ok||0)+1:0;localStorage.setItem('pz_'+user,JSON.stringify(all))}}
 function puzNext(first){
-  const all=pz();tabClick=null;
+  exTok++;zStop();zfr=null;zex='';const all=pz();tabClick=null;
   if(!all.length){$('puz').innerHTML='<p>No puzzles yet. Review a game (or your last losses) first and your own mistakes become puzzles here.</p>';return}
   let a=all.filter(p=>zf==='all'||causeOf(p)===zf);if(!a.length){zf='all';a=all}
   if(!(first&&Z)){const mn=Math.min(...a.map(p=>p.ok||0)),b=a.filter(p=>(p.ok||0)===mn);
     Z=b[Math.floor(Math.random()*b.length)];ZG=new Chess(Z.fen);zsel=null;zres=0;zmsg=`You are ${Z.c==='w'?'White':'Black'}. Find the best move.`}
   tabClick=zClick;drawZ();
 }
+const moveNote=m=>m.captured?`captures a ${NAME[m.captured]}`:/#/.test(m.san)?'checkmate!':/\+/.test(m.san)?'check':/[kq]/.test(m.flags)?'castles':m.promotion?'promotes':'';
+function buildFrames(f,x){
+  const F=[],add=(ucis,title,tint)=>{const L=lineInfo(f,ucis);F.push({fen:f,hl:{},cap:`<b>${title}</b>`});
+    L.mvs.forEach((m,k)=>{const who=m.color===Z.c?'You':'Opponent',n=moveNote(m);F.push({fen:L.fens[k+1],hl:{[m.from]:tint,[m.to]:tint},cap:`<b>${title}</b><br>${who}: <b>${m.san}</b>${n?' · '+n:''}`})})};
+  if(x.pl)add(x.pl,'❌ What happens after your move','rgba(224,100,90,.6)');
+  add(x.bl,x.pl?'✅ The better line':'✅ Why this move works','rgba(79,191,106,.55)');
+  return F;
+}
+function zStop(){clearInterval(zt);zt=null}
+function zplay(){if(zt){zStop();return drawZ()}if(zi>=zfr.length-1)zi=0;zt=setInterval(()=>{if(zi>=zfr.length-1)zStop();else zi++;drawZ()},1400);drawZ()}
+function zstep(d){zStop();zi=Math.max(0,Math.min(zfr.length-1,zi+d));drawZ()}
+async function zExplain(u){
+  const tok=++exTok;zex='<p>Preparing the replay…</p>';drawZ();
+  try{const x=await explain(Z.fen,u,Z.bu);if(tok!==exTok)return;
+    zfr=buildFrames(Z.fen,x);zi=0;zex=explainHtml(Z.fen,x,causeOf(Z));zplay()}
+  catch(e){if(tok===exTok){zex='<p>Could not analyze this position: '+e.message+'</p>';drawZ()}}
+}
 function drawZ(){
-  const hl={},all=pz(),cs=['all',...new Set(all.map(causeOf))];hlMoves(ZG,zsel,hl);
+  const hl={},all=pz(),cs=['all',...new Set(all.map(causeOf))],fr=zfr&&zfr[zi];hlMoves(ZG,zsel,hl);
   const chips=cs.map(c=>`<button class="${c===zf?'':'alt'}" onclick="zf='${c}';Z=null;puzNext()">${c==='all'?'All':c} (${c==='all'?all.length:all.filter(p=>causeOf(p)===c).length})</button>`).join('');
-  $('puz').innerHTML=`<div class="chips">${chips}</div>`+board(ZG.fen(),hl,zres===2?[Z.bu.slice(0,2),Z.bu.slice(2,4)]:null,Z.c==='b')+`<div id="cap">${zmsg}</div><div class="ctl"><button onclick="puzNext()">Next puzzle</button></div><p>Solved ${zs.ok} of ${zs.n} this session</p>`;
+  $('puz').innerHTML=`<div class="chips">${chips}</div>`+board(fr?fr.fen:ZG.fen(),fr?fr.hl:hl,!fr&&zres===2?[Z.bu.slice(0,2),Z.bu.slice(2,4)]:null,Z.c==='b')+`<div id="cap">${fr?fr.cap:zmsg}</div>`+
+  (zfr?`<div class="ctl"><button class="alt" onclick="zstep(-1)">‹</button><button class="alt" onclick="zplay()">${zt?'⏸ Pause':'▶ Replay'}</button><button class="alt" onclick="zstep(1)">›</button></div>`:'')+
+  `<div class="ctl"><button onclick="puzNext()">Next puzzle</button></div><div id="exZ">${zex}</div><p>Solved ${zs.ok} of ${zs.n} this session</p>`;
 }
 function zClick(q){
   if(zres)return;
@@ -389,7 +556,7 @@ function zClick(q){
     if(m){zs.n++;const u=m.from+m.to+(m.promotion||'');
       if(u===Z.bu){zs.ok++;zres=1;mark(1);zmsg=`✅ Correct! ${Z.san}. ${tip(causeOf(Z))}`}
       else{ZG.undo();zres=2;mark(0);zmsg=`❌ Not quite. Best was <b>${Z.san}</b> (green arrow). ${tip(causeOf(Z))}`}
-      zsel=null;return drawZ()}}
+      zsel=null;drawZ();zExplain(zres===2?u:null);return}}
   const p=ZG.get(q);zsel=p&&p.color===Z.c?q:null;drawZ();
 }
 
